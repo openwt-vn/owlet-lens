@@ -53,10 +53,15 @@ jobs:
           reply-provider: ${{ vars.AI_REPLY_LLM_PROVIDER }}
 
   reply:
+    # Only people with a role in the repository can start a reply: on a public repository anyone can
+    # comment, and every reply costs a model call.
     if: >-
-      (github.event_name == 'issue_comment' && github.event.issue.pull_request != null && !startsWith(github.event.comment.body, '/'))
-      || (github.event_name == 'pull_request_review_comment' && github.event.comment.user.type != 'Bot'
-          && github.event.pull_request.head.repo.full_name == github.repository)
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+      && (
+        (github.event_name == 'issue_comment' && github.event.issue.pull_request != null && !startsWith(github.event.comment.body, '/'))
+        || (github.event_name == 'pull_request_review_comment' && github.event.comment.user.type != 'Bot'
+            && github.event.pull_request.head.repo.full_name == github.repository)
+      )
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     concurrency:
       group: ai-review-reply-${{ github.event.pull_request.number || github.event.issue.number }}

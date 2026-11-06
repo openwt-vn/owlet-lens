@@ -186,4 +186,4 @@ Các tài liệu chi tiết trong thư mục `docs/` hiện chỉ có bằng ti�
 
 Phát hành theo [Apache License 2.0](./LICENSE). Bản quyền 2026 Open Web Technology Vietnam LLC.
 
-Tên Owlet Lens và logo của dự án không nằm trong phạm vi giấy phép (xem điều 6 của giấy phép). Tên và logo của các nền tảng thuộc về chủ sở hữu của chúng và chỉ được dùng để thể hiện khả năng tương thích; xem [NOTICE](./NOTICE).
+Tên Owlet Lens và logo của dự án không nằm trong phạm vi giấy phép (xem điều 6 của giấy phép và [TRADEMARKS.md](./TRADEMARKS.md)). Tên và logo của các nền tảng thuộc về chủ sở hữu của chúng và chỉ được dùng để thể hiện khả năng tương thích; xem [NOTICE](./NOTICE).

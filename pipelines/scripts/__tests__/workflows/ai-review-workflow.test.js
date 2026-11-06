@@ -143,6 +143,17 @@ test('the reply job answers review-thread comments only on pull requests of this
   );
 });
 
+test('the reply job starts only for OWNER, MEMBER and COLLABORATOR comments', () => {
+  const workflow = loadWorkflow();
+  const condition = workflow.jobs.reply.if;
+
+  assert.ok(
+    condition.includes('\'["OWNER","MEMBER","COLLABORATOR"]\'') && condition.includes('github.event.comment.author_association'),
+    'anyone can comment on a public repository, and every reply costs a model call',
+  );
+  assert.ok(!condition.includes('CONTRIBUTOR'), 'a past contributor is not a role in this repository');
+});
+
 test('review-on-demand (/review comment) is separate from the gate and cannot open it', () => {
   const workflow = loadWorkflow();
   const job = workflow.jobs['review-on-demand'];

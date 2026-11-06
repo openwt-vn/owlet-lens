@@ -184,4 +184,4 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md). Documentation index: [docs/README.md](
 
 Licensed under the [Apache License 2.0](./LICENSE). Copyright 2026 Open Web Technology Vietnam LLC.
 
-The name Owlet Lens and its logo are not covered by the license (see section 6 of the license). Platform names and logos belong to their owners and are used only to show compatibility; see [NOTICE](./NOTICE).
+The name Owlet Lens and its logo are not covered by the license (see section 6 of the license and [TRADEMARKS.md](./TRADEMARKS.md)). Platform names and logos belong to their owners and are used only to show compatibility; see [NOTICE](./NOTICE).
