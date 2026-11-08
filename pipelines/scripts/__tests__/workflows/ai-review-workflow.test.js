@@ -187,3 +187,15 @@ test('review-on-demand job triggers on /review comment in PRs', () => {
     'on-demand checkout must use PR merge ref, not default branch',
   );
 });
+
+for (const file of ['ai-review.yml', 'ai-review-reusable.yml']) {
+  test(`${file}: /review refuses fork pull requests before it checks anything out`, () => {
+    const job = loadWorkflow(file).jobs['review-on-demand'];
+    const [guard, second] = job.steps;
+    assert.equal(guard.uses, 'actions/github-script@v7', 'the first step must be the fork guard');
+    assert.match(guard.with.script, /pulls\.get/);
+    assert.match(guard.with.script, /pr\.head\.repo \? pr\.head\.repo\.full_name/, 'a deleted head repository must be refused');
+    assert.match(guard.with.script, /setFailed/);
+    assert.match(second.uses, /^actions\/checkout@/, 'checkout must come after the guard');
+  });
+}
