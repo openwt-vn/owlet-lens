@@ -127,7 +127,7 @@ The tool sends your code to the LLM provider you choose, so decide with care.
 - **Not scrubbed:** the contents of `contextPaths` and coding-standards files are sent as they are. Keep secrets out of them.
 - **Fallback models** can route your code to another provider. Review every model you list.
 
-Details per provider: [LLM data policy](./docs/llm-data-policy.md).
+Details per provider: [LLM data policy](./docs/llm-data-policy.md). To report a vulnerability, see [SECURITY.md](./SECURITY.md).
 
 ## Supported platforms
 

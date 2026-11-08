@@ -217,3 +217,24 @@ test('action.yml has an allowed-hosts input that is empty by default', () => {
   assert.notEqual(action.inputs['allowed-hosts'].required, true);
   assert.equal(action.inputs['allowed-hosts'].default, undefined);
 });
+
+test('actions of other owners are pinned to a full commit SHA, not to a tag that can move', () => {
+  const files = fs.readdirSync(workflowsDir).filter((f) => /\.ya?ml$/.test(f));
+  const unpinned = [];
+  for (const file of files) {
+    for (const [jobName, job] of Object.entries(loadWorkflow(file).jobs ?? {})) {
+      for (const step of job.steps ?? []) {
+        const uses = step.uses;
+        if (typeof uses !== 'string' || uses.startsWith('./') || uses.startsWith('actions/') || uses.startsWith('openwt-vn/')) continue;
+        if (!/@[0-9a-f]{40}$/.test(uses)) unpinned.push(`${file} ${jobName}: ${uses}`);
+      }
+    }
+  }
+  assert.deepEqual(unpinned, [], 'pin these to a commit SHA and keep the version in a comment');
+});
+
+test('SECURITY.md exists and sends reports to private vulnerability reporting, not to a public issue', () => {
+  const text = fs.readFileSync(path.join(workflowsDir, '..', '..', 'SECURITY.md'), 'utf8');
+  assert.match(text, /private vulnerability reporting/i);
+  assert.match(text, /do not open a public issue/i);
+});

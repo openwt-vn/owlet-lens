@@ -56,6 +56,7 @@ jobs:
           git add package.json package-lock.json
           git commit -m "chore: bump version to $VERSION [skip ci]"
           git push origin main
-      - uses: softprops/action-gh-release@v3
+      # Third-party action in a job with write access: pinned to a commit (v3.0.4), not to a tag that can move.
+      - uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           generate_release_notes: true
