@@ -127,7 +127,7 @@ The tool sends your code to the LLM provider you choose, so decide with care.
 - **Not scrubbed:** the contents of `contextPaths` and coding-standards files are sent as they are. Keep secrets out of them.
 - **Fallback models** can route your code to another provider. Review every model you list.
 
-Details per provider: [LLM data policy](./docs/llm-data-policy.md).
+Details per provider: [LLM data policy](./docs/llm-data-policy.md). To report a vulnerability, see [SECURITY.md](./SECURITY.md).
 
 ## Supported platforms
 
@@ -184,4 +184,4 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md). Documentation index: [docs/README.md](
 
 Licensed under the [Apache License 2.0](./LICENSE). Copyright 2026 Open Web Technology Vietnam LLC.
 
-The name Owlet Lens and its logo are not covered by the license (see section 6 of the license). Platform names and logos belong to their owners and are used only to show compatibility; see [NOTICE](./NOTICE).
+The name Owlet Lens and its logo are not covered by the license (see section 6 of the license and [TRADEMARKS.md](./TRADEMARKS.md)). Platform names and logos belong to their owners and are used only to show compatibility; see [NOTICE](./NOTICE).

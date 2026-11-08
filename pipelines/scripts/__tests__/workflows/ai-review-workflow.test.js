@@ -143,6 +143,17 @@ test('the reply job answers review-thread comments only on pull requests of this
   );
 });
 
+test('the reply job starts only for OWNER, MEMBER and COLLABORATOR comments', () => {
+  const workflow = loadWorkflow();
+  const condition = workflow.jobs.reply.if;
+
+  assert.ok(
+    condition.includes('\'["OWNER","MEMBER","COLLABORATOR"]\'') && condition.includes('github.event.comment.author_association'),
+    'anyone can comment on a public repository, and every reply costs a model call',
+  );
+  assert.ok(!condition.includes('CONTRIBUTOR'), 'a past contributor is not a role in this repository');
+});
+
 test('review-on-demand (/review comment) is separate from the gate and cannot open it', () => {
   const workflow = loadWorkflow();
   const job = workflow.jobs['review-on-demand'];
@@ -175,4 +186,55 @@ test('review-on-demand job triggers on /review comment in PRs', () => {
     'refs/pull/${{ github.event.issue.number }}/merge',
     'on-demand checkout must use PR merge ref, not default branch',
   );
+});
+
+for (const file of ['ai-review.yml', 'ai-review-reusable.yml']) {
+  test(`${file}: /review refuses fork pull requests before it checks anything out`, () => {
+    const job = loadWorkflow(file).jobs['review-on-demand'];
+    const [guard, second] = job.steps;
+    assert.equal(guard.uses, 'actions/github-script@v7', 'the first step must be the fork guard');
+    assert.match(guard.with.script, /pulls\.get/);
+    assert.match(guard.with.script, /pr\.head\.repo \? pr\.head\.repo\.full_name/, 'a deleted head repository must be refused');
+    assert.match(guard.with.script, /setFailed/);
+    assert.match(second.uses, /^actions\/checkout@/, 'checkout must come after the guard');
+  });
+}
+
+test('the reusable workflow takes allowed-hosts and hands it to every call of the action', () => {
+  const wf = loadWorkflow('ai-review-reusable.yml');
+  const on = wf.on || wf[true];
+  assert.equal(on.workflow_call.inputs['allowed-hosts'].default, '', 'no host is approved unless the caller lists it');
+  for (const [name, job] of Object.entries(wf.jobs)) {
+    const step = job.steps.find((s) => typeof s.uses === 'string' && s.uses.startsWith('openwt-vn/owlet-lens@'));
+    assert.ok(step, `${name} calls the action`);
+    assert.equal(step.with['allowed-hosts'], '${{ inputs.allowed-hosts }}', `${name} passes allowed-hosts`);
+  }
+});
+
+test('action.yml has an allowed-hosts input that is empty by default', () => {
+  const action = yaml.load(fs.readFileSync(path.join(workflowsDir, '..', '..', 'action.yml'), 'utf8'));
+  assert.ok(action.inputs['allowed-hosts']);
+  assert.notEqual(action.inputs['allowed-hosts'].required, true);
+  assert.equal(action.inputs['allowed-hosts'].default, undefined);
+});
+
+test('actions of other owners are pinned to a full commit SHA, not to a tag that can move', () => {
+  const files = fs.readdirSync(workflowsDir).filter((f) => /\.ya?ml$/.test(f));
+  const unpinned = [];
+  for (const file of files) {
+    for (const [jobName, job] of Object.entries(loadWorkflow(file).jobs ?? {})) {
+      for (const step of job.steps ?? []) {
+        const uses = step.uses;
+        if (typeof uses !== 'string' || uses.startsWith('./') || uses.startsWith('actions/') || uses.startsWith('openwt-vn/')) continue;
+        if (!/@[0-9a-f]{40}$/.test(uses)) unpinned.push(`${file} ${jobName}: ${uses}`);
+      }
+    }
+  }
+  assert.deepEqual(unpinned, [], 'pin these to a commit SHA and keep the version in a comment');
+});
+
+test('SECURITY.md exists and sends reports to private vulnerability reporting, not to a public issue', () => {
+  const text = fs.readFileSync(path.join(workflowsDir, '..', '..', 'SECURITY.md'), 'utf8');
+  assert.match(text, /private vulnerability reporting/i);
+  assert.match(text, /do not open a public issue/i);
 });

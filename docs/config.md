@@ -55,6 +55,23 @@ Inactive providers' keys not validated — only the active providers' keys must 
 `modelstack` targets the ModelStack proxy (`https://api.modelstack.cc/v1/chat/completions`, OpenAI-compatible, `Bearer` auth). It fronts arbitrary upstream models, so the built-in pricing table is empty for it — supply rates under the `pricing:` block (keyed by the model name you route) for accurate cost. Unpriced models log a `level:warn` line and report `$0`.
 
 
+### Where the configuration file may send data
+
+The configuration file is part of the code under review: on a pull request it is the version written by the author of that pull request. So it cannot decide where a secret goes. Two rules apply when the file is loaded ([ADR-0019](./adr/0019-config-cannot-redirect-secrets.md)):
+
+- **Secret variables only under `auth.*`.** A `${VAR}` whose name looks like a secret is read only in a field under `auth.`. That is any name that contains `TOKEN`, `SECRET`, `PASSWORD`, `CREDENTIAL` or `PRIVATE`, or that has `KEY` or `PAT` as a whole word (`GITHUB_TOKEN`, `ANTHROPIC_API_KEY`, `AWS_CREDENTIALS`, `AZURE_PAT`). The match is deliberately wide: a harmless name caught by mistake (`MY_PRIVATE_CONFIG`) costs one clear error and a rename, a secret that slips through costs the secret. Anywhere else the load stops with a `ConfigError` that names the field and the variable, never the value.
+- **URLs that receive data need an approved host.** `review.apiBaseUrl`, `reply.apiBaseUrl` and `review.exportWebhookUrl` must point at an approved host. The hosts of the built-in providers (`api.anthropic.com`, `api.deepseek.com`, `generativelanguage.googleapis.com`, `api.modelstack.cc`, `api.openai.com`) are approved for `apiBaseUrl`. Any other host, and every webhook host, must be listed by the workflow, not by the file:
+
+```yaml
+- uses: openwt-vn/owlet-lens@v1
+  with:
+    allowed-hosts: llm.corp.example hooks.corp.example   # comma or space separated, exact host names
+```
+
+The reusable workflow takes the same `allowed-hosts` input. The list is read from `AI_REVIEW_ALLOWED_HOSTS`, which only the action input sets. Use it for the `openai` provider with a self-hosted endpoint (Ollama, LM Studio, a company gateway) and for export webhooks.
+
+Not covered: `gitlab.baseUrl` and `azure.orgUrl` can still be set by the file. They matter only for the GitLab and Azure DevOps providers.
+
 ### Model failover
 
 `review.fallbackModels` / `reply.fallbackModels` (string arrays, default `[]`) list alternate model ids to try in order when the primary model returns a **retryable** error: 5xx / 429 / 529, or a Cloudflare challenge on a 403 (`isCloudflareChallenge` in `base.js`). Wiring: `makeLLMProvider` (`lib/llm/index.js`) plus `wrapModelFallback` (`lib/llm/model-fallback.js`). Each failover logs a `level: warn` `llm model failover` line. Cost is attributed to the model that answered (`usage.models`), so every fallback model needs a `pricing:` entry. Why each model gets only one attempt: [ADR-0005](./adr/0005-model-failover-single-attempt-per-model.md).

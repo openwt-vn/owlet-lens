@@ -127,7 +127,7 @@ Tool gửi code của bạn tới nhà cung cấp LLM mà bạn chọn, nên hã
 - **Không được lọc:** nội dung của `contextPaths` và các file chuẩn code được gửi nguyên văn. Hãy giữ secret ra khỏi các file này.
 - **Model dự phòng** có thể đưa code của bạn tới một nhà cung cấp khác. Hãy xem xét mọi model bạn liệt kê.
 
-Chi tiết theo từng nhà cung cấp: [chính sách dữ liệu LLM](./docs/llm-data-policy.md).
+Chi tiết theo từng nhà cung cấp: [chính sách dữ liệu LLM](./docs/llm-data-policy.md). Để báo một lỗ hổng bảo mật, xem [SECURITY.md](./SECURITY.md) (bằng tiếng Anh).
 
 ## Các nền tảng hỗ trợ
 
@@ -186,4 +186,4 @@ Các tài liệu chi tiết trong thư mục `docs/` hiện chỉ có bằng ti�
 
 Phát hành theo [Apache License 2.0](./LICENSE). Bản quyền 2026 Open Web Technology Vietnam LLC.
 
-Tên Owlet Lens và logo của dự án không nằm trong phạm vi giấy phép (xem điều 6 của giấy phép). Tên và logo của các nền tảng thuộc về chủ sở hữu của chúng và chỉ được dùng để thể hiện khả năng tương thích; xem [NOTICE](./NOTICE).
+Tên Owlet Lens và logo của dự án không nằm trong phạm vi giấy phép (xem điều 6 của giấy phép và [TRADEMARKS.md](./TRADEMARKS.md)). Tên và logo của các nền tảng thuộc về chủ sở hữu của chúng và chỉ được dùng để thể hiện khả năng tương thích; xem [NOTICE](./NOTICE).

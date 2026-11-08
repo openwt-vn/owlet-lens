@@ -149,7 +149,7 @@ To enable the UI flag flip, supply a PAT with `repo` scope:
 - uses: openwt-vn/owlet-lens@v1
   with:
     anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
-    github-token: ${{ secrets.AI_REVIEW_PAT }}  # PAT with repo scope
+    resolve-token: ${{ secrets.AI_REVIEW_RESOLVE_TOKEN }}  # PAT with repo scope, used only to resolve threads
 ```
 
 ## Troubleshooting

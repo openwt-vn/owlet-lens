@@ -13,10 +13,13 @@ name: Owlet Lens (reusable)
 #   jobs:
 #     ai-review:
 #       uses: openwt-vn/owlet-lens/.github/workflows/ai-review-reusable.yml@v1
+#       with:
+#         runner: '["ubuntu-latest"]'   # required; or '["self-hosted"]' for your own runners
 #       secrets: inherit
 #
 # The consuming repo needs: owlet-lens Actions access set to "accessible from
-# repositories in the organization" (it is private), and a runner matching `runner`.
+# repositories in the organization" while it is private, and a runner matching `runner`
+# among ITS OWN runners (GitHub-hosted, or self-hosted runners available to that repo).
 #
 # Required org/repo secrets (any one LLM key is enough; pick to match config):
 #   - DEEPSEEK_API_KEY (or ANTHROPIC_API_KEY / GEMINI_API_KEY / MODELSTACK_API_KEY)
@@ -54,13 +57,15 @@ on:
     inputs:
       runner:
         description: |
-          Runner labels for both `review` and `reply` jobs, encoded as a
-          JSON array. Default `'["self-hosted"]'`. Labelled example:
-          `'["self-hosted", "my-label"]'`. Array form is required even for
-          a single label so `fromJSON` can parse it uniformly.
-        required: false
+          Runner labels for every job, encoded as a JSON array. Required, with
+          no default: the caller always chooses where its jobs run, and a default
+          would pick a runner for someone who did not ask. Examples:
+          `'["ubuntu-latest"]'` (GitHub-hosted), `'["self-hosted"]'`,
+          `'["self-hosted", "my-label"]'`. Array form is required even for a
+          single label so `fromJSON` can parse it uniformly. The label is
+          resolved among the runners of the CALLING repository.
+        required: true
         type: string
-        default: '["self-hosted"]'
       config-path:
         description: Path to ai-review.config.yaml in the consumer repo
         required: false
@@ -102,6 +107,14 @@ on:
         required: false
         type: boolean
         default: false
+      allowed-hosts:
+        description: |
+          Host names the configuration file may send data to, beyond the built-in LLM providers
+          (review.apiBaseUrl, reply.apiBaseUrl, review.exportWebhookUrl). Comma or space separated.
+          The file comes from the pull request, so only the workflow can approve a host.
+        required: false
+        type: string
+        default: ''
       allowed-org:
         description: Only run when github.repository_owner matches this value
         required: false
@@ -149,13 +162,15 @@ jobs:
           severity-threshold: ${{ inputs.severity-threshold }}
           strict: ${{ inputs.strict }}
           dry-run: ${{ inputs.dry-run }}
+          allowed-hosts: ${{ inputs.allowed-hosts }}
 
   reply:
     if: >-
       ${{ inputs.allowed-org != ''
           && github.repository_owner == inputs.allowed-org
           && github.event_name == 'pull_request_review_comment'
-          && github.event.comment.user.type != 'Bot' }}
+          && github.event.comment.user.type != 'Bot'
+          && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) }}
     runs-on: ${{ fromJSON(inputs.runner) }}
     concurrency:
       group: ai-review-reply-${{ github.event.pull_request.number || github.event.issue.number }}
@@ -182,6 +197,7 @@ jobs:
           reply-model: ${{ inputs.reply-model }}
           reply-provider: ${{ inputs.reply-provider || vars.AI_REPLY_LLM_PROVIDER }}
           dry-run: ${{ inputs.dry-run }}
+          allowed-hosts: ${{ inputs.allowed-hosts }}
 
   review-on-demand:
     if: >-
@@ -201,6 +217,19 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      # The merge ref of a pull request from a fork is code written by someone else, and this job would
+      # run it (or load its config) with the repository secrets. Refuse before anything is checked out.
+      # A pull request whose head repository was deleted has no repository: refuse it as well.
+      - name: Refuse pull requests from forks
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: context.issue.number });
+            const head = pr.head.repo ? pr.head.repo.full_name.toLowerCase() : null;
+            if (head !== `${owner}/${repo}`.toLowerCase()) {
+              core.setFailed('/review does not run on pull requests from forks. Push the branch to this repository to review it.');
+            }
       - uses: actions/checkout@v7
         with:
           ref: refs/pull/${{ github.event.issue.number }}/merge
@@ -222,6 +251,7 @@ jobs:
           severity-threshold: ${{ inputs.severity-threshold }}
           strict: ${{ inputs.strict }}
           dry-run: ${{ inputs.dry-run }}
+          allowed-hosts: ${{ inputs.allowed-hosts }}
         env:
           GITHUB_PR_NUMBER: ${{ github.event.issue.number }}
 
@@ -265,3 +295,4 @@ jobs:
           review-model: ${{ inputs.review-model }}
           review-provider: ${{ inputs.review-provider || vars.AI_REVIEW_LLM_PROVIDER }}
           dry-run: ${{ inputs.dry-run }}
+          allowed-hosts: ${{ inputs.allowed-hosts }}
