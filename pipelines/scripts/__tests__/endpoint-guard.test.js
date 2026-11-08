@@ -96,3 +96,16 @@ describe('URLs that receive data need an approved host', () => {
     );
   });
 });
+
+describe('the secret-name match is wide on purpose', () => {
+  it('catches plural and compound names that an anchored match would miss', () => {
+    for (const n of ['AWS_CREDENTIALS', 'GOOGLE_APPLICATION_CREDENTIALS', 'SSH_PRIVATE_KEY', 'MY_PRIVATE_CONFIG']) {
+      assert.equal(isSecretVarName(n), true, n);
+    }
+  });
+  it('does not catch KEY or PAT inside another word', () => {
+    for (const n of ['KEYWORD', 'PATH', 'MONKEY_BUSINESS']) {
+      assert.equal(isSecretVarName(n), false, n);
+    }
+  });
+});

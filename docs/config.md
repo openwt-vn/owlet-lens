@@ -59,7 +59,7 @@ Inactive providers' keys not validated — only the active providers' keys must 
 
 The configuration file is part of the code under review: on a pull request it is the version written by the author of that pull request. So it cannot decide where a secret goes. Two rules apply when the file is loaded ([ADR-0019](./adr/0019-config-cannot-redirect-secrets.md)):
 
-- **Secret variables only under `auth.*`.** A `${VAR}` whose name looks like a secret (`GITHUB_TOKEN`, `*_API_KEY`, `*_TOKEN`, `*_SECRET`, `*_PASSWORD`, `*_PAT`) is read only in a field under `auth.`. Anywhere else the load stops with a `ConfigError` that names the field and the variable, never the value.
+- **Secret variables only under `auth.*`.** A `${VAR}` whose name looks like a secret is read only in a field under `auth.`. That is any name that contains `TOKEN`, `SECRET`, `PASSWORD`, `CREDENTIAL` or `PRIVATE`, or that has `KEY` or `PAT` as a whole word (`GITHUB_TOKEN`, `ANTHROPIC_API_KEY`, `AWS_CREDENTIALS`, `AZURE_PAT`). The match is deliberately wide: a harmless name caught by mistake (`MY_PRIVATE_CONFIG`) costs one clear error and a rename, a secret that slips through costs the secret. Anywhere else the load stops with a `ConfigError` that names the field and the variable, never the value.
 - **URLs that receive data need an approved host.** `review.apiBaseUrl`, `reply.apiBaseUrl` and `review.exportWebhookUrl` must point at an approved host. The hosts of the built-in providers (`api.anthropic.com`, `api.deepseek.com`, `generativelanguage.googleapis.com`, `api.modelstack.cc`, `api.openai.com`) are approved for `apiBaseUrl`. Any other host, and every webhook host, must be listed by the workflow, not by the file:
 
 ```yaml

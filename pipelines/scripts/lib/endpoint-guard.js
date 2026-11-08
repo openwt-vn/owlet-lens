@@ -16,7 +16,12 @@ const { ConfigError } = require('./errors.js');
  * ADR-0019.
  */
 
-/** Names such as GITHUB_TOKEN, ANTHROPIC_API_KEY, AI_REVIEW_RESOLVE_TOKEN, DB_PASSWORD, AZURE_PAT. */
+/**
+ * Names such as GITHUB_TOKEN, ANTHROPIC_API_KEY, AI_REVIEW_RESOLVE_TOKEN, DB_PASSWORD, AWS_CREDENTIALS, AZURE_PAT.
+ * TOKEN, SECRET, PASSWORD, CREDENTIAL and PRIVATE match anywhere in the name on purpose (CREDENTIALS, SSH_PRIVATE_KEY,
+ * SYSTEM_ACCESSTOKEN); KEY and PAT must be whole words so that KEYWORD or PATH are not caught. A false positive costs
+ * a rename, a false negative costs a secret.
+ */
 const SECRET_VAR = /(TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|PRIVATE|(^|_)(KEY|PAT)(_|$))/;
 
 /** Hosts of the providers this project calls by default. */
