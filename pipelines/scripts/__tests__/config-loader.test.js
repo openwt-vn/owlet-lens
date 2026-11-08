@@ -655,9 +655,9 @@ describe('config-loader', () => {
     assert.equal(cfg.review.exportWebhookUrl, null);
   });
 
-  it('accepts a valid http(s) review.exportWebhookUrl', () => {
+  it('accepts a valid http(s) review.exportWebhookUrl on an approved host', () => {
     fs.writeFileSync(path.join(tmp, 'ai-review.config.yaml'), 'review:\n  exportWebhookUrl: https://hooks.example.com/webhook\n');
-    const cfg = loadConfig({ cwd: tmp, env: { ANTHROPIC_API_KEY: 'k' }, cliFlags: {} });
+    const cfg = loadConfig({ cwd: tmp, env: { ANTHROPIC_API_KEY: 'k', AI_REVIEW_ALLOWED_HOSTS: 'hooks.example.com' }, cliFlags: {} });
     assert.equal(cfg.review.exportWebhookUrl, 'https://hooks.example.com/webhook');
   });
 

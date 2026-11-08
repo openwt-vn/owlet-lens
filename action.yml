@@ -24,6 +24,9 @@ inputs:
   resolve-token:
     description: 'PAT with repo scope used only for resolveReviewThread/unresolveReviewThread mutations. Optional; falls back to github-token. Expected to have repo scope: without it the thread stays open on screen and the per-run resolve retry warns every time.'
     required: false
+  allowed-hosts:
+    description: 'Host names (comma or space separated) that the configuration file may send data to: review.apiBaseUrl / reply.apiBaseUrl (beyond the built-in providers) and review.exportWebhookUrl. The file comes from the pull request, so only the workflow can approve a host. Empty keeps the built-in providers only.'
+    required: false
   pr-number:
     description: 'PR number to review (defaults from event context if omitted)'
     required: false

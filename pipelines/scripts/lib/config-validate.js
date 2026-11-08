@@ -4,6 +4,7 @@
 const { Minimatch } = require('minimatch');
 const { ConfigError } = require('./errors.js');
 const { deepMerge } = require('./config-merge.js');
+const { assertHostAllowed, BUILTIN_LLM_HOSTS } = require('./endpoint-guard.js');
 
 /**
  * Validate and normalize a merged config, then resolve credentials from config or env.
@@ -270,6 +271,7 @@ function validateConfig({ merged, env, unresolvedByPath, onWarn }) {
       } catch {
         throw new ConfigError(`${kind}.apiBaseUrl is not a valid URL (got: ${JSON.stringify(url)})`);
       }
+      assertHostAllowed({ field: `${kind}.apiBaseUrl`, url, env, builtin: BUILTIN_LLM_HOSTS });
     }
   }
 
@@ -346,6 +348,7 @@ function validateConfig({ merged, env, unresolvedByPath, onWarn }) {
           'review.exportWebhookUrl is not a valid URL',
         );
       }
+      assertHostAllowed({ field: 'review.exportWebhookUrl', url: rawUrl.trim(), env });
     }
   }
 

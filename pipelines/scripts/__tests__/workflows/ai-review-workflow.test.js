@@ -199,3 +199,21 @@ for (const file of ['ai-review.yml', 'ai-review-reusable.yml']) {
     assert.match(second.uses, /^actions\/checkout@/, 'checkout must come after the guard');
   });
 }
+
+test('the reusable workflow takes allowed-hosts and hands it to every call of the action', () => {
+  const wf = loadWorkflow('ai-review-reusable.yml');
+  const on = wf.on || wf[true];
+  assert.equal(on.workflow_call.inputs['allowed-hosts'].default, '', 'no host is approved unless the caller lists it');
+  for (const [name, job] of Object.entries(wf.jobs)) {
+    const step = job.steps.find((s) => typeof s.uses === 'string' && s.uses.startsWith('openwt-vn/owlet-lens@'));
+    assert.ok(step, `${name} calls the action`);
+    assert.equal(step.with['allowed-hosts'], '${{ inputs.allowed-hosts }}', `${name} passes allowed-hosts`);
+  }
+});
+
+test('action.yml has an allowed-hosts input that is empty by default', () => {
+  const action = yaml.load(fs.readFileSync(path.join(workflowsDir, '..', '..', 'action.yml'), 'utf8'));
+  assert.ok(action.inputs['allowed-hosts']);
+  assert.notEqual(action.inputs['allowed-hosts'].required, true);
+  assert.equal(action.inputs['allowed-hosts'].default, undefined);
+});

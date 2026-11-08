@@ -102,6 +102,14 @@ on:
         required: false
         type: boolean
         default: false
+      allowed-hosts:
+        description: |
+          Host names the configuration file may send data to, beyond the built-in LLM providers
+          (review.apiBaseUrl, reply.apiBaseUrl, review.exportWebhookUrl). Comma or space separated.
+          The file comes from the pull request, so only the workflow can approve a host.
+        required: false
+        type: string
+        default: ''
       allowed-org:
         description: Only run when github.repository_owner matches this value
         required: false
@@ -149,6 +157,7 @@ jobs:
           severity-threshold: ${{ inputs.severity-threshold }}
           strict: ${{ inputs.strict }}
           dry-run: ${{ inputs.dry-run }}
+          allowed-hosts: ${{ inputs.allowed-hosts }}
 
   reply:
     if: >-
@@ -182,6 +191,7 @@ jobs:
           reply-model: ${{ inputs.reply-model }}
           reply-provider: ${{ inputs.reply-provider || vars.AI_REPLY_LLM_PROVIDER }}
           dry-run: ${{ inputs.dry-run }}
+          allowed-hosts: ${{ inputs.allowed-hosts }}
 
   review-on-demand:
     if: >-
@@ -235,6 +245,7 @@ jobs:
           severity-threshold: ${{ inputs.severity-threshold }}
           strict: ${{ inputs.strict }}
           dry-run: ${{ inputs.dry-run }}
+          allowed-hosts: ${{ inputs.allowed-hosts }}
         env:
           GITHUB_PR_NUMBER: ${{ github.event.issue.number }}
 
@@ -278,3 +289,4 @@ jobs:
           review-model: ${{ inputs.review-model }}
           review-provider: ${{ inputs.review-provider || vars.AI_REVIEW_LLM_PROVIDER }}
           dry-run: ${{ inputs.dry-run }}
+          allowed-hosts: ${{ inputs.allowed-hosts }}

@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const yaml = require('js-yaml');
 const { ConfigError } = require('./errors.js');
+const { isSecretVarName, isAuthPath } = require('./endpoint-guard.js');
 
 const DEFAULTS = Object.freeze({
   provider: 'auto',
@@ -79,15 +80,25 @@ const KNOWN_KEYS = new Set([
  * Anthropic SDK / Octokit / Azure pipeline variables. Lowercase env vars
  * (uncommon for config-driving variables) are NOT interpolated.
  *
+ * A variable whose name looks like a secret (GITHUB_TOKEN, *_API_KEY, ...) is read only under `auth.*`:
+ * the file may come from a pull request, and anywhere else the value could be sent to a host the
+ * workflow did not approve (ADR-0019).
+ *
  * @param {unknown} value
  * @param {NodeJS.ProcessEnv} env
- * @param {{ unresolved?: string[]|null }} [opts]
+ * @param {{ unresolved?: string[]|null, keyPath?: string }} [opts]
  * @returns {unknown}
  */
 function interpolate(value, env, opts) {
   if (typeof value !== 'string') return value;
   const unresolved = opts?.unresolved ?? null;
+  const keyPath = opts?.keyPath ?? '';
   return value.replace(/\$\{([A-Z0-9_]+)\}/g, (_, name) => {
+    if (isSecretVarName(name) && !isAuthPath(keyPath)) {
+      throw new ConfigError(
+        `config field '${keyPath}' may not read the secret variable ${name}: secret variables can be used only under auth.*`,
+      );
+    }
     const v = env[name];
     if (v == null || v === '') {
       if (unresolved) unresolved.push(name);
@@ -100,7 +111,7 @@ function interpolate(value, env, opts) {
 function deepInterpolate(obj, env, keyPath = '', unresolvedByPath = {}) {
   if (obj === null || typeof obj !== 'object') {
     const unresolved = [];
-    const out = interpolate(obj, env, { unresolved });
+    const out = interpolate(obj, env, { unresolved, keyPath });
     if (unresolved.length > 0) unresolvedByPath[keyPath] = unresolved;
     return out;
   }

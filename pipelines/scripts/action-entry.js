@@ -20,6 +20,7 @@ function getInputs() {
     replyProvider: core.getInput('reply-provider'),
     prNumber: core.getInput('pr-number'),
     repository: core.getInput('repository'),
+    allowedHosts: core.getInput('allowed-hosts'),
     strict: core.getBooleanInput('strict'),
   };
 }
@@ -46,6 +47,8 @@ async function main() {
   if (i.reviewProvider) process.env.AI_REVIEW_LLM_PROVIDER = i.reviewProvider;
   if (i.replyProvider) process.env.AI_REPLY_LLM_PROVIDER = i.replyProvider;
   if (i.repository) process.env.GITHUB_REPOSITORY = i.repository;
+  // Set from the input only: the configuration file cannot widen the list (ADR-0019).
+  process.env.AI_REVIEW_ALLOWED_HOSTS = i.allowedHosts;
   if (i.strict) process.env.AI_REVIEW_STRICT = 'true';
 
   // `learn` runs off no PR (it mines merged-PR history and opens a proposal PR),
