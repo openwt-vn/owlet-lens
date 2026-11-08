@@ -105,3 +105,20 @@ test('reusable learn job does not pass reply-model (learn never reflects)', () =
   assert.equal(step.with.subcommand, 'learn');
   assert.equal(step.with['reply-model'], undefined);
 });
+
+test('the reusable workflow never picks a runner for the caller: runner is required and has no default', () => {
+  const wf = loadWorkflow();
+  const input = (wf.on || wf[true]).workflow_call.inputs.runner;
+  assert.equal(input.required, true);
+  assert.equal(input.default, undefined, 'a default would choose a runner for someone who did not ask');
+  const text = fs.readFileSync(workflowPath, 'utf8');
+  for (const line of text.split('\n').filter((l) => l.trim().startsWith('runs-on:'))) {
+    assert.match(line, /fromJSON\(inputs\.runner\)/, `every job takes its runner from the input: ${line.trim()}`);
+  }
+});
+
+test('the reusable reply job starts only for OWNER, MEMBER and COLLABORATOR comments', () => {
+  const cond = loadWorkflow().jobs.reply.if;
+  assert.match(cond, /contains\(fromJSON\('\["OWNER","MEMBER","COLLABORATOR"\]'\), github\.event\.comment\.author_association\)/);
+  assert.match(cond, /github\.event\.comment\.user\.type != 'Bot'/);
+});

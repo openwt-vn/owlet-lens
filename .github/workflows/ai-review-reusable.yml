@@ -13,10 +13,13 @@ name: Owlet Lens (reusable)
 #   jobs:
 #     ai-review:
 #       uses: openwt-vn/owlet-lens/.github/workflows/ai-review-reusable.yml@v1
+#       with:
+#         runner: '["ubuntu-latest"]'   # required; or '["self-hosted"]' for your own runners
 #       secrets: inherit
 #
 # The consuming repo needs: owlet-lens Actions access set to "accessible from
-# repositories in the organization" (it is private), and a runner matching `runner`.
+# repositories in the organization" while it is private, and a runner matching `runner`
+# among ITS OWN runners (GitHub-hosted, or self-hosted runners available to that repo).
 #
 # Required org/repo secrets (any one LLM key is enough; pick to match config):
 #   - DEEPSEEK_API_KEY (or ANTHROPIC_API_KEY / GEMINI_API_KEY / MODELSTACK_API_KEY)
@@ -54,13 +57,15 @@ on:
     inputs:
       runner:
         description: |
-          Runner labels for both `review` and `reply` jobs, encoded as a
-          JSON array. Default `'["self-hosted"]'`. Labelled example:
-          `'["self-hosted", "my-label"]'`. Array form is required even for
-          a single label so `fromJSON` can parse it uniformly.
-        required: false
+          Runner labels for every job, encoded as a JSON array. Required, with
+          no default: the caller always chooses where its jobs run, and a default
+          would pick a runner for someone who did not ask. Examples:
+          `'["ubuntu-latest"]'` (GitHub-hosted), `'["self-hosted"]'`,
+          `'["self-hosted", "my-label"]'`. Array form is required even for a
+          single label so `fromJSON` can parse it uniformly. The label is
+          resolved among the runners of the CALLING repository.
+        required: true
         type: string
-        default: '["self-hosted"]'
       config-path:
         description: Path to ai-review.config.yaml in the consumer repo
         required: false
@@ -164,7 +169,8 @@ jobs:
       ${{ inputs.allowed-org != ''
           && github.repository_owner == inputs.allowed-org
           && github.event_name == 'pull_request_review_comment'
-          && github.event.comment.user.type != 'Bot' }}
+          && github.event.comment.user.type != 'Bot'
+          && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) }}
     runs-on: ${{ fromJSON(inputs.runner) }}
     concurrency:
       group: ai-review-reply-${{ github.event.pull_request.number || github.event.issue.number }}
