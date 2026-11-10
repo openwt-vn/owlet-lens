@@ -138,16 +138,16 @@ Chi tiết theo từng nhà cung cấp: [chính sách dữ liệu LLM](./docs/ll
 
 ## So sánh với các công cụ tương tự
 
-Bảng so sánh ngắn, dựa trên dữ kiện: chỉ ghi những gì mỗi dự án nêu trong tài liệu công khai của họ (kiểm tra ngày 10/11/2026). "Không nêu" nghĩa là chúng tôi không tìm thấy trong các trang đã đọc, không có nghĩa là công cụ đó không có. Sản phẩm thay đổi theo thời gian, hãy kiểm tra lại trang chính thức trước khi quyết định.
+Bảng so sánh ngắn, dựa trên dữ kiện: chỉ ghi những gì mỗi dự án nêu trong tài liệu công khai của họ (kiểm tra ngày 10/11/2026). Dấu ❌ nghĩa là chúng tôi không tìm thấy trong các trang đã đọc, chưa chắc là công cụ đó không có. Sản phẩm thay đổi theo thời gian, hãy kiểm tra lại trang chính thức trước khi quyết định.
 
 | | Owlet Lens | [CodeRabbit](https://docs.coderabbit.ai) | [PR-Agent](https://github.com/qodo-ai/pr-agent) | [GitHub Copilot code review](https://docs.github.com/en/copilot/concepts/agents/code-review) |
 |---|---|---|---|---|
 | Hình thức phân phối | Mã nguồn mở (Apache-2.0), chạy trong CI của bạn | Dịch vụ lưu trữ sẵn; tự triển khai dành cho khách hàng Enterprise từ 500 seat | Mã nguồn mở (MIT), do cộng đồng duy trì; CLI, GitHub Action, Docker, tự triển khai | Một phần của GitHub Copilot |
 | Nền tảng | GitHub, GitLab, Bitbucket Cloud, Azure DevOps | GitHub, GitLab, Bitbucket, Azure DevOps (gồm bản tự quản lý và Data Center) | GitHub, GitLab, Bitbucket, Azure DevOps, Gitea | GitHub; Azure DevOps (public preview) |
-| Chọn mô hình AI | Anthropic, Gemini, DeepSeek, ModelStack, mọi endpoint tương thích OpenAI (kể cả mô hình cục bộ) | Không nêu | OpenAI, Claude, Gemini, DeepSeek, Mistral và nhiều mô hình khác qua LiteLLM (kể cả Ollama) | Không chọn được: "Model switching is not supported" |
+| Chọn mô hình AI | Anthropic, Gemini, DeepSeek, ModelStack, mọi endpoint tương thích OpenAI (kể cả mô hình cục bộ) | ❌ | OpenAI, Claude, Gemini, DeepSeek, Mistral và nhiều mô hình khác qua LiteLLM (kể cả Ollama) | ❌ Không chọn được: "Model switching is not supported" |
 | Bạn trả tiền cho | Chỉ phần sử dụng LLM; phần mềm miễn phí | Gói theo từng lập trình viên; miễn phí cho repo công khai ở gói Open source | Chỉ phần sử dụng LLM; phần mềm miễn phí | Một gói Copilot; mỗi lần review tiêu tốn AI credits |
-| Đọc phản hồi của lập trình viên và đóng thread đã sửa | Có | Không nêu | Không nêu | Không nêu |
-| Đề xuất quy tắc chuẩn code từ các phát hiện bị từ chối | Có, trong một pull request do người duyệt | Nêu rằng "learns from your team's feedback" | Không nêu | Không nêu |
+| Đọc phản hồi của lập trình viên và đóng thread đã sửa | ✅ Có | ❌ | ❌ | ❌ |
+| Đề xuất quy tắc chuẩn code từ các phát hiện bị từ chối | ✅ Có, trong một pull request do người duyệt | Nêu rằng "learns from your team's feedback" | ❌ | ❌ |
 
 Nguồn: [nền tảng](https://docs.coderabbit.ai/platforms/overview.md) và [gói dịch vụ](https://docs.coderabbit.ai/management/plans.md) của CodeRabbit, [README của PR-Agent](https://github.com/qodo-ai/pr-agent) và [tài liệu Copilot code review](https://docs.github.com/en/copilot/concepts/agents/code-review).
 
