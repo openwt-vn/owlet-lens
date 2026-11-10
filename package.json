@@ -49,15 +49,13 @@
     "build": "npm run build:action && npm run build:cli",
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
   },
-  "dependencies": {
+  "devDependencies": {
     "@actions/cache": "^4.1.0",
+    "@actions/core": "^1.11.1",
     "@octokit/rest": "^21.0.2",
+    "@vercel/ncc": "^0.38.4",
     "js-yaml": "^4.1.0",
     "minimatch": "^10.2.6",
     "undici": "^5.29.0"
-  },
-  "devDependencies": {
-    "@actions/core": "^1.11.1",
-    "@vercel/ncc": "^0.38.4"
   }
 }
