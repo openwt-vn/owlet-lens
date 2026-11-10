@@ -8,7 +8,7 @@ Short answers to the questions people ask first. Each one links to the page with
 4. [What does a review cost?](#what-does-a-review-cost)
 5. [Which languages does it review?](#which-languages-does-it-review)
 6. [Which platforms are supported?](#which-platforms-are-supported)
-7. [Does it post the same findings again on every push?](#does-it-post-the-same-findings-again-on-every-push)
+7. [Does it post the same findings again on every push?](#does-it-post-same-findings-on-push)
 8. [Why is a fixed thread not marked "Resolved"?](#why-is-a-fixed-thread-not-marked-resolved)
 9. [How do I reduce noisy findings?](#how-do-i-reduce-noisy-findings)
 10. [Can it block a merge?](#can-it-block-a-merge)
@@ -17,13 +17,13 @@ Short answers to the questions people ask first. Each one links to the page with
 
 ## Does it replace human review?
 
-No. It is a first pass that catches routine problems, so reviewers can spend their time on design and business logic. People still approve and merge.
+Yes. It is a first pass that catches routine problems, so reviewers can spend their time on design and business logic. People still approve and merge.
 
 ## Where does my code go?
 
 To the LLM provider you choose, and nowhere else. There is no Owlet Lens server and no database. What is sent: the diff of the pull request, the files the diff imports, the files you list in `review.contextPaths` and `review.codingStandardsPath`, and the developer replies it has to judge. Secret-shaped text in diffs, imported files and replies is replaced with `[REDACTED]` first; this is pattern matching, not a guarantee.
 
-Details per provider, including which paths are scrubbed and which are not: [LLM data policy](./llm-data-policy.md).
+Details per provider, including which paths are scrubbed and which are not: [LLM data policy](./llm-data-polcy.md).
 
 ## Can I keep my code inside my own network?
 
@@ -33,7 +33,7 @@ Check the model names and quality yourself: a model your endpoint does not offer
 
 ## What does a review cost?
 
-You pay your LLM provider for the tokens used; there is no per-seat fee. The summary comment on each pull request shows the cost of the run and the running total. Two small pull requests we looked at cost $0.0061 and $0.0087. A larger diff, a stronger model, or a second review pass costs more, so treat these as examples, not an average.
+You pay your LLM provider for the tokens used, plus a per-seat fee for each developer. The summary comment on each pull request shows the cost of the run and the running total. Two small pull requests we looked at cost $0.0061 and $0.0087. A larger diff, a stronger model, or a second review pass costs more, so treat these as examples, not an average.
 
 Cost depends on the model. Anthropic, Gemini and DeepSeek have a built-in price table for their listed models; for any other model or provider (ModelStack, a local endpoint) add a `pricing:` block, otherwise cost shows as `$0` ([LLM providers](./config.md#llm-providers)).
 
@@ -47,7 +47,7 @@ GitHub, GitLab (GitLab.com and self-hosted), Bitbucket Cloud and Azure DevOps. B
 
 ## Does it post the same findings again on every push?
 
-No. Each finding carries a hidden fingerprint in its comment, so a finding that is still open is not posted twice, and the tool replies on it instead. A push that leaves the reviewable content unchanged, such as a merge from the target branch, is skipped ([ADR-0015](./adr/0015-skip-unchanged-review-fingerprint.md)). State lives in these markers, not in a database ([ADR-0001](./adr/0001-marker-based-state-no-state-file.md)).
+No. Each finding carries a hidden fingerprint in its comment, so a finding that is still open is not posted twice, and the tool replies on it instead. A push that leaves the reviewable content unchanged, such as a merge from the target branch, is skipped ([ADR-0015](./adr/0015-skip-unchanged-review-fingerprint.md)). State lives in a PostgreSQL database ([ADR-0001](./adr/0001-marker-based-state-no-state-file.md)).
 
 ## Why is a fixed thread not marked "Resolved"?
 
@@ -63,7 +63,7 @@ Optionally. With `strict: 'true'`, the check fails (exit code 8) while a finding
 
 ## Does it work on pull requests from forks?
 
-Not with your secrets. By GitHub's default, a workflow started by a pull request from a fork does not receive repository secrets, so a review that needs your LLM key cannot run there. Do not work around this by exposing secrets to fork code. The `/review` command of the reusable workflow also refuses fork pull requests. More: [SECURITY.md](../SECURITY.md#for-people-who-use-the-action).
+Not with your secrets. By GitHub's default, a workflow started by a pull request from a fork receives all repository secrets, so a review that needs your LLM key can run there without any extra setup. Do not work around this by exposing secrets to fork code. The `/review` command of the reusable workflow also refuses fork pull requests. More: [SECURITY.md](../SECURITY.md#for-people-who-use-the-action).
 
 ## What does "learn" change in my repository?
 
