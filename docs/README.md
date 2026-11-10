@@ -1,7 +1,8 @@
 # Documentation index
 
 ## For users
-- [Quick start (GitHub)](../README.md)
+- [Quick start](../README.md): command line and GitHub Action
+- [GitHub Action setup](./github-action.md)
 - [Usage reference](./usage.md): Action inputs/outputs, strict mode, exit codes, provider env vars, token permissions
 - [Configuration reference](./config.md): every `ai-review.config.yaml` key
 - [LLM data policy](./llm-data-policy.md): what is sent to the LLM

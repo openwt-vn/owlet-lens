@@ -41,9 +41,19 @@ test('drops empty string suggestion', () => {
   assert.ok(!result.includes('```suggestion'));
 });
 
-test('trims suggestion content', () => {
+test('keeps leading indentation and trims trailing whitespace', () => {
   const result = formatBody({ ...base, suggestion: '  fix()  ' }, 'github');
-  assert.ok(result.includes('```suggestion\nfix()\n```'));
+  assert.ok(result.includes('```suggestion\n  fix()\n```'));
+});
+
+test('keeps a four-space indent on the suggested line', () => {
+  const result = formatBody({ ...base, suggestion: '    return a < b;' }, 'github');
+  assert.ok(result.includes('```suggestion\n    return a < b;\n```'));
+});
+
+test('drops leading blank lines but keeps the indent of the code line', () => {
+  const result = formatBody({ ...base, suggestion: '\n\n    return a < b;\n' }, 'github');
+  assert.ok(result.includes('```suggestion\n    return a < b;\n```'));
 });
 
 test('handles non-string suggestion (number)', () => {

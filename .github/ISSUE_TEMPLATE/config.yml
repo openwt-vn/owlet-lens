@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question or idea
+    url: https://github.com/openwt-vn/owlet-lens/discussions
+    about: Ask how to use it, or talk about an idea, in Discussions.
+  - name: Security problem
+    url: https://github.com/openwt-vn/owlet-lens/security/advisories/new
+    about: Report it privately. Please do not open a public issue.
