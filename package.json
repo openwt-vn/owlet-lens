@@ -1,12 +1,37 @@
 {
-  "name": "owlet-lens",
+  "name": "@openwt-vn/owlet-lens",
   "version": "1.1.0",
-  "private": true,
   "license": "Apache-2.0",
   "description": "Owlet Lens: AI code review for pull requests on GitHub, GitLab, Bitbucket Cloud and Azure DevOps",
   "bin": {
-    "owlet-lens": "pipelines/scripts/ai-review.js",
-    "ai-review": "pipelines/scripts/ai-review.js"
+    "owlet-lens": "dist/cli/index.js"
+  },
+  "files": [
+    "dist/cli/",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openwt-vn/owlet-lens.git"
+  },
+  "homepage": "https://github.com/openwt-vn/owlet-lens#readme",
+  "bugs": {
+    "url": "https://github.com/openwt-vn/owlet-lens/issues"
+  },
+  "keywords": [
+    "code-review",
+    "ai",
+    "llm",
+    "pull-request",
+    "github-actions",
+    "gitlab",
+    "bitbucket",
+    "azure-devops"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "node": ">=20.10.0"
