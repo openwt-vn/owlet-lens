@@ -16,16 +16,17 @@
 ![Platforms](https://img.shields.io/badge/platforms-GitHub%20%C2%B7%20GitLab%20%C2%B7%20Bitbucket%20%C2%B7%20Azure%20DevOps-c43727)
 
 <p align="center">
-  <a href="#quick-start-github">Quick start</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#command-line">Command line</a> ·
+  <a href="#github-action">GitHub Action</a> ·
   <a href="#other-platforms">GitLab · Bitbucket · Azure DevOps</a> ·
   <a href="#choose-an-llm-provider">LLM providers</a> ·
   <a href="#privacy-and-security">Privacy</a> ·
-  <a href="#command-line">CLI</a> ·
   <a href="#documentation">Documentation</a> ·
   <a href="#faq">FAQ</a>
 </p>
 
-AI code review for pull requests. It posts findings as inline review threads, reads developer replies, and closes threads that are fixed or declined. Runs on GitHub (this page), plus Bitbucket Cloud (Cloud only), GitLab ([setup](./docs/gitlab-setup.md)) and Azure DevOps ([setup](./docs/usage.md#review-provider-github-bitbucket-gitlab-or-azure-devops)).
+AI code review for pull requests. It posts findings as inline review threads, reads developer replies, and closes threads that are fixed or declined. Runs on GitHub ([setup](./docs/github-action.md)), plus Bitbucket Cloud (Cloud only), GitLab ([setup](./docs/gitlab-setup.md)) and Azure DevOps ([setup](./docs/usage.md#review-provider-github-bitbucket-gitlab-or-azure-devops)).
 
 ## Why
 
@@ -44,83 +45,32 @@ AI code review for pull requests. It posts findings as inline review threads, re
 
 No database: review state lives in hidden markers inside the comments, and learned rules live in a file in your repo.
 
-## Quick start (GitHub)
+## Quick start
 
-**1. Add a secret.** Repo → Settings → Secrets and variables → Actions → `ANTHROPIC_API_KEY` (other providers: [below](#choose-an-llm-provider)).
+### Command line
 
-**2. Add `.github/workflows/ai-review.yml`:**
+Run it from a terminal or from any CI. It is on [npm](https://www.npmjs.com/package/@openwt-vn/owlet-lens) (Node 20.10 or newer):
 
-```yaml
-name: Owlet Lens
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-  pull_request_review_comment:
-    types: [created]
-
-jobs:
-  review:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest   # or self-hosted
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }   # the review needs full history to diff
-      - uses: openwt-vn/owlet-lens@v1
-        with:
-          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
-          subcommand: review
-
-  reply:
-    if: github.event_name == 'pull_request_review_comment' && github.event.comment.user.type != 'Bot'
-    runs-on: ubuntu-latest   # or self-hosted
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: openwt-vn/owlet-lens@v1
-        with:
-          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
-          subcommand: reply
+```bash
+npm install -g @openwt-vn/owlet-lens
+GITHUB_TOKEN=... ANTHROPIC_API_KEY=... GITHUB_REPOSITORY=owner/repo GITHUB_PR_NUMBER=42 \
+  owlet-lens review --dry-run     # print what it would post, post nothing
 ```
 
-Replies are read from comments **inside review threads** (`pull_request_review_comment`), not from the PR conversation tab.
+Or run it without installing: `npx @openwt-vn/owlet-lens review --dry-run`.
 
-> [!TIP]
-> To also read replies from the conversation tab, add `issue_comment: { types: [created] }` under `on:` and replace the reply job's `if:` with:
->
-> ```yaml
-> if: >-
->   (github.event_name == 'pull_request_review_comment' && github.event.comment.user.type != 'Bot')
->   || (github.event_name == 'issue_comment' && github.event.issue.pull_request != null)
-> ```
->
-> This repo's own [workflow](./.github/workflows/ai-review.yml) adds a check that the commenter is a member of the repo.
+| Command | What it does |
+|---|---|
+| `owlet-lens review` | Review a pull request |
+| `owlet-lens reply` | Judge developer replies in AI threads |
+| `owlet-lens learn` | Propose coding-standards rules from declined findings |
+| `owlet-lens init` | Ask a few questions and create `ai-review.config.yaml` |
 
-**3. Open a pull request.** Findings appear as review threads within a minute or two. Reply to a thread to discuss it.
+Useful flags: `--dry-run`, `--strict` (exit code 8 on blocking findings), `--config=<path>`, `--provider=<github|bitbucket|gitlab|azure-devops>`, `--force-review`. Environment variables for the other platforms, flags and exit codes: [Usage reference](./docs/usage.md). To work on the code from a clone instead, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-> [!NOTE]
-> Every Action input and output, the exit codes and version pinning are in the [usage reference](./docs/usage.md).
+### GitHub Action
 
-<details>
-<summary><b>Shorter: call the reusable workflow</b></summary>
-
-Keep the `on:` block from step 2 and replace the two jobs with one call. It runs both the review and the reply job:
-
-```yaml
-jobs:
-  ai-review:
-    uses: openwt-vn/owlet-lens/.github/workflows/ai-review-reusable.yml@v1
-    with:
-      runner: '["ubuntu-latest"]'   # required; '["self-hosted"]' for your own runners
-    secrets: inherit
-```
-
-`runner` is a JSON list in a string because the workflow passes it to `runs-on`. It reads one LLM key secret (`ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`, `GEMINI_API_KEY` or `MODELSTACK_API_KEY`) and the optional `AI_REVIEW_RESOLVE_TOKEN`; the list is at the top of [`ai-review-reusable.yml`](./.github/workflows/ai-review-reusable.yml).
-</details>
+To review every pull request automatically, add one secret (`ANTHROPIC_API_KEY`; other providers: [below](#choose-an-llm-provider)) and a workflow that calls `openwt-vn/owlet-lens@v1`. Step by step, with the reusable workflow and reading replies from the conversation tab: [GitHub Action setup](./docs/github-action.md). For GitLab, Bitbucket Cloud and Azure DevOps, see [Other platforms](#other-platforms).
 
 ## Other platforms
 
@@ -195,6 +145,7 @@ Details per provider: [LLM data policy](./docs/llm-data-policy.md). To report a 
 
 | Topic | Read |
 |---|---|
+| GitHub Action setup: the workflow file, replies from the conversation tab, the reusable workflow | [docs/github-action.md](./docs/github-action.md) |
 | Action inputs and outputs, exit codes, strict mode (fail CI on serious findings), token permissions, version pinning | [docs/usage.md](./docs/usage.md) |
 | Every `ai-review.config.yaml` key | [docs/config.md](./docs/config.md) |
 | What is sent to each LLM provider | [docs/llm-data-policy.md](./docs/llm-data-policy.md) |
@@ -255,27 +206,6 @@ review:
 ```
 
 On GitHub the button is **Re-run all jobs** on the PR's review run; no workflow change is needed. The switch and the list are read from the target branch, so a pull request cannot turn its own gate off. Setup per platform: [GitHub](./docs/tl-gate-github-setup.md) · [GitLab](./docs/tl-gate-gitlab-setup.md) · [Bitbucket](./docs/tl-gate-bitbucket-setup.md) · [Azure DevOps](./docs/tl-gate-azure-devops-setup.md). Design: [ADR-0014](./docs/adr/0014-tl-gate-reads-the-target-branch.md).
-
-## Command line
-
-Besides the Action, you can run it from a terminal or any CI. It is on [npm](https://www.npmjs.com/package/@openwt-vn/owlet-lens) (Node 20.10 or newer):
-
-```bash
-npm install -g @openwt-vn/owlet-lens
-GITHUB_TOKEN=... ANTHROPIC_API_KEY=... GITHUB_REPOSITORY=owner/repo GITHUB_PR_NUMBER=42 \
-  owlet-lens review --dry-run     # print what it would post, post nothing
-```
-
-Or run it without installing: `npx @openwt-vn/owlet-lens review --dry-run`.
-
-| Command | What it does |
-|---|---|
-| `owlet-lens review` | Review a pull request |
-| `owlet-lens reply` | Judge developer replies in AI threads |
-| `owlet-lens learn` | Propose coding-standards rules from declined findings |
-| `owlet-lens init` | Ask a few questions and create `ai-review.config.yaml` |
-
-Useful flags: `--dry-run`, `--strict` (exit code 8 on blocking findings), `--config=<path>`, `--provider=<github|bitbucket|gitlab|azure-devops>`, `--force-review`. Environment variables for the other platforms, flags and exit codes: [Usage reference](./docs/usage.md). To work on the code from a clone instead, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Contributing
 
