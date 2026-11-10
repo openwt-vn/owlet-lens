@@ -14,6 +14,7 @@ Short answers to the questions people ask first. Each one links to the page with
 10. [Can it block a merge?](#can-it-block-a-merge)
 11. [Does it work on pull requests from forks?](#does-it-work-on-pull-requests-from-forks)
 12. [What does "learn" change in my repository?](#what-does-learn-change-in-my-repository)
+13. [What happens if the model fails?](#what-happens-if-the-model-fails)
 
 ## Does it replace human review?
 
@@ -35,7 +36,7 @@ Check the model names and quality yourself: a model your endpoint does not offer
 
 You pay your LLM provider for the tokens used; there is no per-seat fee. The summary comment on each pull request shows the cost of the run and the running total. Two small pull requests we looked at cost $0.0061 and $0.0087. A larger diff, a stronger model, or a second review pass costs more, so treat these as examples, not an average.
 
-Cost depends on the model. Anthropic, Gemini and DeepSeek have a built-in price table for their listed models; for any other model or provider (ModelStack, a local endpoint) add a `pricing:` block, otherwise cost shows as `$0` ([LLM providers](./config.md#llm-providers)).
+Cost depends on the model. Anthropic, Gemini and DeepSeek have a built-in price table for their listed models; for ModelStack or a local endpoint add a `pricing:` block, otherwise cost shows as `$0`. OpenRouter reports the amount it billed, which the summary comment uses ([LLM providers](./config.md#llm-providers)).
 
 ## Which languages does it review?
 
@@ -68,3 +69,9 @@ Not with your secrets. By GitHub's default, a workflow started by a pull request
 ## What does "learn" change in my repository?
 
 Nothing on its own. It is optional and runs on a schedule you set. It collects the findings your team declined (`wontfix`) in merged pull requests and, when a pattern repeats, opens a pull request that adds a rule to a LEARNED block at the end of your coding-standards file. A person reviews and merges that pull request. Rules you wrote by hand above the block are never touched. See [Self-learning](./config.md#self-learning-reviewlearn).
+
+## What happens if the model fails?
+
+You can list backup models in `review.fallbackModels` and `reply.fallbackModels`. In the review, any failed attempt moves on to the next model: an error, an empty answer, or an answer without the expected findings. In the reply, reflection and learn steps, any error moves on. A bare model id stays on the same provider; `<provider>:<model>` (for example `anthropic:claude-sonnet-5-5`) switches provider and uses that provider's key. Each model gets one attempt.
+
+A fallback on another provider sends your code to that provider, so check every model you list against the [LLM data policy](./llm-data-policy.md). Details: [Model failover](./config.md#model-failover), [ADR-0021](./adr/0021-fallback-on-any-failure-across-providers.md).

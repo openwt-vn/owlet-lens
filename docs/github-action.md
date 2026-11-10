@@ -81,5 +81,5 @@ jobs:
     secrets: inherit
 ```
 
-`runner` is a JSON list in a string because the workflow passes it to `runs-on`. It reads one LLM key secret (`ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`, `GEMINI_API_KEY` or `MODELSTACK_API_KEY`) and the optional `AI_REVIEW_RESOLVE_TOKEN`; the list is at the top of [`ai-review-reusable.yml`](../.github/workflows/ai-review-reusable.yml).
+`runner` is a JSON list in a string because the workflow passes it to `runs-on`. It reads one LLM key secret (`ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`, `GEMINI_API_KEY`, `MODELSTACK_API_KEY` or `OPENROUTER_API_KEY`) and the optional `AI_REVIEW_RESOLVE_TOKEN`; the list is at the top of [`ai-review-reusable.yml`](../.github/workflows/ai-review-reusable.yml).
 </details>
