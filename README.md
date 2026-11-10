@@ -82,8 +82,6 @@ Replies are read from comments **inside review threads** (`pull_request_review_c
 
 **3. Open a pull request.** Findings appear as review threads within a minute or two. Reply to a thread to discuss it.
 
-**Try it without touching your pull requests.** Add `dry-run: 'true'` under `with:` and the run prints what it would post, without posting anything. Remove it when you are happy.
-
 ## Choose an LLM provider
 
 Review and reply each pick a provider, so you can use a stronger model for review and a cheaper one for replies.
@@ -109,12 +107,6 @@ To use a non-default provider, replace `anthropic-api-key` in **both** jobs and 
 ```
 
 A model name your provider does not accept makes every call fail. Fallback models, pricing and every other key are in the [configuration reference](./docs/config.md#llm-providers).
-
-## Good to know
-
-- **Pull requests from forks get no secrets.** GitHub does not pass repository secrets to workflows triggered by a fork, so the review will not run for external contributors. Do not work around this with `pull_request_target` unless you understand the risk of running untrusted code with your secrets.
-- **Cost.** A typical pull request takes about two model calls, and a push that does not change the reviewed content is skipped. The real cost depends on the model and the size of the diff; the summary comment reports it.
-- **Pinning.** `@v1` follows the latest 1.x release. For reproducible runs pin an exact tag such as `@v1.0.0`, or a full commit SHA.
 
 ## Privacy and security
 

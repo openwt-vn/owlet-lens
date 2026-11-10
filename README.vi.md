@@ -82,8 +82,6 @@ Các câu trả lời được đọc từ comment **bên trong thread review** 
 
 **3. Mở một pull request.** Các phát hiện xuất hiện thành thread review trong một đến hai phút. Hãy trả lời trong thread để trao đổi.
 
-**Thử mà không ảnh hưởng tới pull request của bạn.** Thêm `dry-run: 'true'` dưới `with:`, lần chạy sẽ in ra những gì nó định đăng mà không đăng gì cả. Bỏ dòng này đi khi bạn đã hài lòng.
-
 ## Chọn nhà cung cấp LLM
 
 Review và reply mỗi bên chọn một nhà cung cấp, nên bạn có thể dùng mô hình mạnh hơn cho review và mô hình rẻ hơn cho reply.
@@ -109,12 +107,6 @@ Review và reply mỗi bên chọn một nhà cung cấp, nên bạn có thể d
 ```
 
 Tên model mà nhà cung cấp không chấp nhận sẽ làm mọi lần gọi đều lỗi. Model dự phòng, bảng giá và mọi khóa khác nằm trong [tài liệu cấu hình](./docs/config.md#llm-providers).
-
-## Cần biết
-
-- **Pull request từ fork không nhận được secret.** GitHub không truyền secret của repo cho workflow được kích hoạt từ fork, nên review sẽ không chạy cho người đóng góp bên ngoài. Đừng vòng qua giới hạn này bằng `pull_request_target` nếu bạn chưa hiểu rủi ro của việc chạy code không đáng tin cậy cùng với secret của bạn.
-- **Chi phí.** Một pull request thông thường mất khoảng hai lần gọi model, và một lần push không làm thay đổi nội dung cần review sẽ bị bỏ qua. Chi phí thực tế phụ thuộc vào model và kích thước diff; comment tổng hợp có báo cáo chi phí.
-- **Ghim phiên bản.** `@v1` đi theo bản 1.x mới nhất. Để chạy lặp lại được, hãy ghim một tag cụ thể như `@v1.0.0`, hoặc một mã commit SHA đầy đủ.
 
 ## Quyền riêng tư và bảo mật
 
