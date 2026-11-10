@@ -153,22 +153,13 @@ Sources: [CodeRabbit platforms](https://docs.coderabbit.ai/platforms/overview.md
 
 ## What a run looks like
 
-<details>
-<summary>Example summary comment (illustrative numbers)</summary>
+**A finding on a real pull request.** The tool posts each finding as a review thread on the line it is about, with a severity and a category. The developer can reply in the thread or resolve it.
 
-```
-### [Owlet Lens] Summary
+![A review thread on a real pull request: the bot flags a CRITICAL bug on the changed line in e2e/run.ts and explains why](docs/assets/examples/finding-thread.png)
 
-PR: #42 - Add refund endpoint
-Findings: 3 new · 1 replied · 0 reopened · 1 closed
-Cost: $0.0812 (1 call(s))
-Severity: 1 HIGH · 2 MEDIUM
-Files: 6 reviewed
-```
+**The summary comment.** The bot keeps one summary comment per pull request and updates it on every push: what was found, replied to, reopened or closed, the cost of the run, the severity counts and how long it took.
 
-The bot keeps one summary comment per pull request and updates it on every push. Each finding is its own thread on the line it is about.
-
-</details>
+![The Owlet Lens summary comment of the same pull request: 1 new finding, cost $0.0087, 1 file reviewed, duration 190.2s](docs/assets/examples/summary-comment.png)
 
 ## FAQ
 

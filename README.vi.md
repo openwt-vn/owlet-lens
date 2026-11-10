@@ -153,22 +153,15 @@ Nguồn: [nền tảng](https://docs.coderabbit.ai/platforms/overview.md) và [g
 
 ## Một lần chạy trông như thế nào
 
-<details>
-<summary>Ví dụ comment tổng hợp (số liệu minh họa)</summary>
+**Một phát hiện trên pull request thật.** Tool đăng mỗi phát hiện thành một thread review ngay trên dòng code liên quan, kèm mức độ nghiêm trọng và loại lỗi. Lập trình viên có thể trả lời trong thread hoặc đánh dấu đã giải quyết.
 
-```
-### [Owlet Lens] Summary
+![Một thread review trên pull request thật: bot chỉ ra một lỗi CRITICAL trên dòng code đã đổi trong e2e/run.ts và giải thích lý do](docs/assets/examples/finding-thread.png)
 
-PR: #42 - Add refund endpoint
-Findings: 3 new · 1 replied · 0 reopened · 1 closed
-Cost: $0.0812 (1 call(s))
-Severity: 1 HIGH · 2 MEDIUM
-Files: 6 reviewed
-```
+**Comment tổng hợp.** Bot giữ một comment tổng hợp cho mỗi pull request và cập nhật nó sau mỗi lần push: số phát hiện mới, đã trả lời, mở lại hoặc đóng, chi phí của lần chạy, số lượng theo mức độ nghiêm trọng và thời gian chạy.
 
-Bot giữ một comment tổng hợp cho mỗi pull request và cập nhật nó sau mỗi lần push. Mỗi phát hiện là một thread riêng trên đúng dòng code liên quan. Nội dung comment của bot hiện bằng tiếng Anh.
+![Comment tổng hợp của Owlet Lens trên cùng pull request: 1 phát hiện mới, chi phí $0.0087, 1 file được review, thời gian 190.2s](docs/assets/examples/summary-comment.png)
 
-</details>
+Nội dung comment của bot hiện bằng tiếng Anh.
 
 ## Câu hỏi thường gặp
 
