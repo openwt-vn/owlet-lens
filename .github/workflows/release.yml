@@ -46,6 +46,11 @@ jobs:
           MAJOR=$(echo "$REF_NAME" | cut -d. -f1)
           git tag -f "$MAJOR"
           git push -f origin "$REF_NAME" "$MAJOR"
+      # The GitHub Release comes before the npm publish, so an npm failure cannot take it away.
+      # Third-party action in a job with write access: pinned to a commit (v3.0.4), not to a tag that can move.
+      - uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
+        with:
+          generate_release_notes: true
       # Publishes @openwt-vn/owlet-lens with the dist/cli built above. The package must list this
       # repository and this workflow file as its trusted publisher on npmjs.com (package Settings).
       # It needs a GitHub-hosted runner: npm does not support self-hosted runners for this yet.
@@ -80,7 +85,3 @@ jobs:
           git add package.json package-lock.json
           git commit -m "chore: bump version to $VERSION [skip ci]"
           git push origin main
-      # Third-party action in a job with write access: pinned to a commit (v3.0.4), not to a tag that can move.
-      - uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
-        with:
-          generate_release_notes: true
