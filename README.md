@@ -145,7 +145,7 @@ Based on each project's public documentation, checked 10 November 2026.
 
 ## FAQ
 
-- **Does it replace human review?** No. It is a first pass that catches routine problems, so reviewers can spend their time on design and business logic. People still approve and merge.
+Common questions (data and privacy, local models, cost, languages, forks, strict mode): see the [FAQ](./docs/faq.md).
 
 ## Customising
 

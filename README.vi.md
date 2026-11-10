@@ -149,6 +149,8 @@ Nội dung comment của bot hiện bằng tiếng Anh.
 
 - **Nó có thay thế review của con người không?** Không. Nó là lượt xem xét đầu tiên, bắt các vấn đề thông thường, để người review dành thời gian cho thiết kế và logic nghiệp vụ. Con người vẫn là người duyệt và merge.
 
+Thêm các câu hỏi về dữ liệu và quyền riêng tư, model chạy cục bộ, chi phí, ngôn ngữ, fork, strict mode: xem [FAQ](./docs/faq.md) (tiếng Anh).
+
 ## Tùy chỉnh
 
 Tùy chọn: thêm `ai-review.config.yaml` ở thư mục gốc của repo (model, ngưỡng mức độ, đường dẫn cần bỏ qua, chuẩn code). Hãy bắt đầu từ [file cấu hình mẫu](./examples/ai-review.config.yaml). Mọi khóa đều có trong [tài liệu cấu hình](./docs/config.md).
