@@ -1,8 +1,0 @@
-# Code owners are asked to review pull requests that touch the paths below.
-# When several patterns match, the last one wins. Add owners per path as the team grows.
-
-# Default: every file
-*                                            @voquanghoa @thomastran @taldib @haithdoan
-
-# Security-sensitive: secret redaction before anything is sent to an LLM
-pipelines/scripts/lib/diff-secret-redact.js  @voquanghoa @thomastran @taldib @haithdoan
