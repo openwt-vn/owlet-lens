@@ -16,7 +16,7 @@
 ![Node 20.10+](https://img.shields.io/badge/node-%E2%89%A520.10-339933)
 ![Platforms](https://img.shields.io/badge/platforms-GitHub%20%C2%B7%20GitLab%20%C2%B7%20Bitbucket%20%C2%B7%20Azure%20DevOps-c43727)
 
-AI code review for pull requests. It posts findings as inline review threads, reads developer replies, and closes threads that are fixed or declined. Runs on GitHub (this page), plus Bitbucket Cloud, GitLab and Azure DevOps ([supported platforms](#supported-platforms)).
+AI code review for pull requests. It posts findings as inline review threads, reads developer replies, and closes threads that are fixed or declined. Runs on GitHub (this page), plus Bitbucket Cloud (Cloud only), GitLab ([setup](./docs/gitlab-setup.md)) and Azure DevOps ([setup](./docs/usage.md#review-provider-github-bitbucket-gitlab-or-azure-devops)).
 
 ## Why
 
@@ -127,15 +127,6 @@ The tool sends your code to the LLM provider you choose, so decide with care.
 
 Details per provider: [LLM data policy](./docs/llm-data-policy.md). To report a vulnerability, see [SECURITY.md](./SECURITY.md).
 
-## Supported platforms
-
-| Platform | Notes | Guide |
-|---|---|---|
-| GitHub | GitHub Action, full feature set | this page |
-| GitLab | GitLab.com and self-hosted, CI template | [docs/gitlab-setup.md](./docs/gitlab-setup.md) |
-| Bitbucket Cloud | Cloud only; Server and Data Center are not supported | [Provider setup](./docs/usage.md#review-provider-github-bitbucket-gitlab-or-azure-devops) |
-| Azure DevOps | Services and Server | [Provider setup](./docs/usage.md#review-provider-github-bitbucket-gitlab-or-azure-devops) |
-
 ## How it compares
 
 Based on each project's public documentation, checked 10 November 2026.
@@ -163,9 +154,6 @@ Based on each project's public documentation, checked 10 November 2026.
 ## FAQ
 
 - **Does it replace human review?** No. It is a first pass that catches routine problems, so reviewers can spend their time on design and business logic. People still approve and merge.
-- **Is my code safe?** See [Privacy and security](#privacy-and-security): you choose the provider, secret-shaped text is scrubbed, and the details are in the [LLM data policy](./docs/llm-data-policy.md).
-- **Can I use a local model?** Yes. Any OpenAI-compatible endpoint works, including local ones such as Ollama ([configuration reference](./docs/config.md#llm-providers)).
-- **How much does it cost?** See [Good to know](#good-to-know). The summary comment shows the cost of each run.
 
 ## Customising
 
@@ -176,8 +164,6 @@ Optional: add `ai-review.config.yaml` at the repo root (models, severity thresho
 | Fail CI on serious findings (`strict`) | [Usage reference](./docs/usage.md#strict-mode) |
 | Let the bot flip GitHub's "Resolved" button | [Token permissions](./docs/usage.md#limitations--token-permissions) |
 | All Action inputs and outputs, version pinning | [Usage reference](./docs/usage.md#inputs) |
-| Use another LLM or tune noise | [docs/config.md](./docs/config.md) |
-| Know what is sent to the LLM | [LLM data policy](./docs/llm-data-policy.md) |
 
 ## Contributing
 
@@ -187,4 +173,4 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md). Documentation index: [docs/README.md](
 
 Licensed under the [Apache License 2.0](./LICENSE). Copyright 2026 Open Web Technology Vietnam LLC.
 
-The name Owlet Lens and its logo are not covered by the license (see section 6 of the license and [TRADEMARKS.md](./TRADEMARKS.md)). Platform names and logos belong to their owners and are used only to show compatibility; see [NOTICE](./NOTICE).
+The name Owlet Lens and its logo are not covered by the license: see [TRADEMARKS.md](./TRADEMARKS.md) and [NOTICE](./NOTICE).

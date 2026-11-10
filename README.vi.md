@@ -16,7 +16,7 @@
 ![Node 20.10+](https://img.shields.io/badge/node-%E2%89%A520.10-339933)
 ![Nền tảng](https://img.shields.io/badge/platforms-GitHub%20%C2%B7%20GitLab%20%C2%B7%20Bitbucket%20%C2%B7%20Azure%20DevOps-c43727)
 
-Công cụ review code bằng AI cho pull request. Tool đăng các phát hiện thành thread review ngay trên dòng code, đọc phản hồi của lập trình viên, và đóng những thread đã được sửa hoặc đã bị từ chối. Chạy trên GitHub (trang này), cùng Bitbucket Cloud, GitLab và Azure DevOps ([các nền tảng hỗ trợ](#các-nền-tảng-hỗ-trợ)).
+Công cụ review code bằng AI cho pull request. Tool đăng các phát hiện thành thread review ngay trên dòng code, đọc phản hồi của lập trình viên, và đóng những thread đã được sửa hoặc đã bị từ chối. Chạy trên GitHub (trang này), cùng Bitbucket Cloud (chỉ bản Cloud), GitLab ([cài đặt](./docs/gitlab-setup.md)) và Azure DevOps ([cài đặt](./docs/usage.md#review-provider-github-bitbucket-gitlab-or-azure-devops)).
 
 ## Vì sao dùng
 
@@ -127,15 +127,6 @@ Tool gửi code của bạn tới nhà cung cấp LLM mà bạn chọn, nên hã
 
 Chi tiết theo từng nhà cung cấp: [chính sách dữ liệu LLM](./docs/llm-data-policy.md). Để báo một lỗ hổng bảo mật, xem [SECURITY.md](./SECURITY.md) (bằng tiếng Anh).
 
-## Các nền tảng hỗ trợ
-
-| Nền tảng | Ghi chú | Hướng dẫn |
-|---|---|---|
-| GitHub | GitHub Action, đầy đủ tính năng | trang này |
-| GitLab | GitLab.com và tự host, mẫu CI | [docs/gitlab-setup.md](./docs/gitlab-setup.md) |
-| Bitbucket Cloud | Chỉ bản Cloud; không hỗ trợ Server và Data Center | [Cài đặt nhà cung cấp](./docs/usage.md#review-provider-github-bitbucket-gitlab-or-azure-devops) |
-| Azure DevOps | Services và Server | [Cài đặt nhà cung cấp](./docs/usage.md#review-provider-github-bitbucket-gitlab-or-azure-devops) |
-
 ## So sánh với các công cụ tương tự
 
 Dựa trên tài liệu công khai của từng dự án, kiểm tra ngày 10/11/2026.
@@ -165,9 +156,6 @@ Nội dung comment của bot hiện bằng tiếng Anh.
 ## Câu hỏi thường gặp
 
 - **Nó có thay thế review của con người không?** Không. Nó là lượt xem xét đầu tiên, bắt các vấn đề thông thường, để người review dành thời gian cho thiết kế và logic nghiệp vụ. Con người vẫn là người duyệt và merge.
-- **Code của tôi có an toàn không?** Xem [Quyền riêng tư và bảo mật](#quyền-riêng-tư-và-bảo-mật): bạn chọn nhà cung cấp, các chuỗi giống secret được lọc, và chi tiết nằm trong [chính sách dữ liệu LLM](./docs/llm-data-policy.md).
-- **Tôi có dùng được mô hình cục bộ không?** Có. Mọi endpoint tương thích OpenAI đều dùng được, kể cả các mô hình cục bộ như Ollama ([tài liệu cấu hình](./docs/config.md#llm-providers)).
-- **Chi phí bao nhiêu?** Xem [Cần biết](#cần-biết). Comment tổng hợp cho biết chi phí của từng lần chạy.
 
 ## Tùy chỉnh
 
@@ -178,8 +166,6 @@ Tùy chọn: thêm `ai-review.config.yaml` ở thư mục gốc của repo (mode
 | Làm CI thất bại khi có phát hiện nghiêm trọng (`strict`) | [Tài liệu sử dụng](./docs/usage.md#strict-mode) |
 | Cho bot bật nút "Resolved" của GitHub | [Quyền của token](./docs/usage.md#limitations--token-permissions) |
 | Mọi input và output của Action, ghim phiên bản | [Tài liệu sử dụng](./docs/usage.md#inputs) |
-| Dùng LLM khác hoặc giảm nhiễu | [docs/config.md](./docs/config.md) |
-| Biết cái gì được gửi tới LLM | [Chính sách dữ liệu LLM](./docs/llm-data-policy.md) |
 
 ## Đóng góp
 
@@ -191,4 +177,4 @@ Các tài liệu chi tiết trong thư mục `docs/` hiện chỉ có bằng ti�
 
 Phát hành theo [Apache License 2.0](./LICENSE). Bản quyền 2026 Open Web Technology Vietnam LLC.
 
-Tên Owlet Lens và logo của dự án không nằm trong phạm vi giấy phép (xem điều 6 của giấy phép và [TRADEMARKS.md](./TRADEMARKS.md)). Tên và logo của các nền tảng thuộc về chủ sở hữu của chúng và chỉ được dùng để thể hiện khả năng tương thích; xem [NOTICE](./NOTICE).
+Tên Owlet Lens và logo của dự án không nằm trong phạm vi giấy phép: xem [TRADEMARKS.md](./TRADEMARKS.md) và [NOTICE](./NOTICE).
