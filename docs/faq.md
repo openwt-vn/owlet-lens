@@ -36,7 +36,7 @@ Check the model names and quality yourself: a model your endpoint does not offer
 
 You pay your LLM provider for the tokens used; there is no per-seat fee. The summary comment on each pull request shows the cost of the run and the running total. Two small pull requests we looked at cost $0.0061 and $0.0087. A larger diff, a stronger model, or a second review pass costs more, so treat these as examples, not an average.
 
-Cost depends on the model. Anthropic, Gemini and DeepSeek have a built-in price table for their listed models; for ModelStack or a local endpoint add a `pricing:` block, otherwise cost shows as `$0`. OpenRouter reports the amount it billed, which the summary comment uses ([LLM providers](./config.md#llm-providers)).
+Cost depends on the model. Anthropic, Gemini and DeepSeek have a built-in price table for their listed models; for any other model or provider (ModelStack, an OpenAI-compatible endpoint, a local model) add a `pricing:` block, otherwise cost shows as `$0`. OpenRouter is the exception: it reports the amount it billed, which the summary comment uses ([LLM providers](./config.md#llm-providers)).
 
 ## Which languages does it review?
 
