@@ -14,7 +14,11 @@ const { CONFIG } = require('./config.js');
  */
 function formatBody(f, providerName) {
   let body = `${CONFIG.aiReviewPrefix} **[${f.severity ?? 'UNKNOWN'}/${f.category ?? 'unknown'}]** ${f.body}`;
-  const s = typeof f.suggestion === 'string' ? f.suggestion.trim() : '';
+  // Keep the leading indentation: a suggestion block replaces the whole line, so
+  // stripping it would make "Apply suggestion" de-indent the code. Only blank
+  // lines at the start and any trailing whitespace are removed.
+  const raw = typeof f.suggestion === 'string' ? f.suggestion : '';
+  const s = raw.trim() ? raw.replace(/^(?:[ \t]*\r?\n)+/, '').trimEnd() : '';
   if (s) {
     if (!s.includes('\n') && !s.includes('```') && providerName === 'github') {
       body += `\n\n\`\`\`suggestion\n${s}\n\`\`\``;
