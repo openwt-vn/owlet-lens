@@ -18,8 +18,6 @@
 
 AI code review for pull requests. It posts findings as inline review threads, reads developer replies, and closes threads that are fixed or declined. Runs on GitHub (this page), plus Bitbucket Cloud, GitLab and Azure DevOps ([supported platforms](#supported-platforms)).
 
-Built and used at OpenWT Vietnam.
-
 ## Why
 
 - **It talks back.** It reads each developer reply and decides: fixed, will not fix, or still open.
@@ -137,6 +135,21 @@ Details per provider: [LLM data policy](./docs/llm-data-policy.md). To report a 
 | GitLab | GitLab.com and self-hosted, CI template | [docs/gitlab-setup.md](./docs/gitlab-setup.md) |
 | Bitbucket Cloud | Cloud only; Server and Data Center are not supported | [Provider setup](./docs/usage.md#review-provider-github-bitbucket-gitlab-or-azure-devops) |
 | Azure DevOps | Services and Server | [Provider setup](./docs/usage.md#review-provider-github-bitbucket-gitlab-or-azure-devops) |
+
+## How it compares
+
+A short, factual comparison with tools in the same space. It only states what each project says in its own public documentation (checked 10 November 2026). "Not stated" means we did not find it in the pages we read, not that the tool lacks it. Products change, so check their sites before you decide.
+
+| | Owlet Lens | [CodeRabbit](https://docs.coderabbit.ai) | [PR-Agent](https://github.com/qodo-ai/pr-agent) | [GitHub Copilot code review](https://docs.github.com/en/copilot/concepts/agents/code-review) |
+|---|---|---|---|---|
+| Distribution | Open source (Apache-2.0), runs in your own CI | Hosted service; self-hosting for Enterprise customers with 500+ seats | Open source (MIT), community-maintained; CLI, GitHub Action, Docker, self-hosted | Part of GitHub Copilot |
+| Platforms | GitHub, GitLab, Bitbucket Cloud, Azure DevOps | GitHub, GitLab, Bitbucket, Azure DevOps (including self-managed and Data Center editions) | GitHub, GitLab, Bitbucket, Azure DevOps, Gitea | GitHub; Azure DevOps (public preview) |
+| Choice of AI model | Anthropic, Gemini, DeepSeek, ModelStack, any OpenAI-compatible endpoint (including local models) | Not stated | OpenAI, Claude, Gemini, DeepSeek, Mistral and others through LiteLLM (including Ollama) | Not selectable: "Model switching is not supported" |
+| What you pay for | The LLM usage only; the software is free | Per-developer plans; free for public repositories on its Open source plan | The LLM usage only; the software is free | A Copilot plan; each review consumes AI credits |
+| Reads developer replies and closes fixed threads | Yes | Not stated | Not stated | Not stated |
+| Proposes coding-standards rules from declined findings | Yes, in a pull request a person approves | Says it "learns from your team's feedback" | Not stated | Not stated |
+
+Sources: [CodeRabbit platforms](https://docs.coderabbit.ai/platforms/overview.md) and [plans](https://docs.coderabbit.ai/management/plans.md), the [PR-Agent README](https://github.com/qodo-ai/pr-agent) and [Copilot code review docs](https://docs.github.com/en/copilot/concepts/agents/code-review).
 
 ## What a run looks like
 
