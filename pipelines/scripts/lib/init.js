@@ -76,12 +76,13 @@ function nextSteps({ provider, keyEnv, template, pipeline }) {
   }
   lines.push(`  ${n++}. Create a new branch:  git checkout -b ${BRANCH}`);
   lines.push(`  ${n++}. Commit the change:    git add ${files.join(' ')} && git commit -m "ci: add Owlet Lens"`);
-  lines.push(`  ${n++}. Push it:              git push -u origin ${BRANCH}`);
-  lines.push(`  ${n++}. Open a pull request from that branch`);
-  lines.push(`  ${n}. Watch the review on that pull request: findings appear there as comments within a minute or two`);
+  lines.push(`  ${n}. Push the branch, then open a pull request from it:  git push -u origin ${BRANCH}`);
   lines.push('');
+  lines.push('Finally, watch the review on that pull request: the findings appear there as comments within a minute or two.');
   lines.push(`If the review fails, check that ${variables.join(', ')} ${variables.length > 1 ? 'are' : 'is'} set in your CI settings, with exactly ${variables.length > 1 ? 'those names' : 'that name'}.`);
   lines.push(`If something else looks wrong, please open an issue: ${ISSUES_URL}`);
+  lines.push('');
+  lines.push('Hint: to review before each commit as well, run `owlet-lens install-hook` to add a git pre-commit hook. Read its warning first: it needs environment variables, and a failing review blocks the commit.');
   lines.push('');
   return lines.join('\n');
 }

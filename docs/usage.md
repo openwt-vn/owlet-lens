@@ -68,7 +68,7 @@ It writes `ai-review.config.yaml` (an existing one is backed up first) and, if y
 
 `init` never overwrites a pipeline file that already exists. It writes the template next to it with a `.owlet-lens` suffix (for example `.gitlab-ci.yml.owlet-lens`) and tells you to merge it by hand. It also never sets secrets for you: it prints the names to add in your CI settings.
 
-When it finishes, `init` prints what to do next: add the variables it names to your CI settings, create a new branch (`ci/owlet-lens`), commit the files, push, open a pull request, and watch the review on that pull request. It also reminds you to check that those variables are set with exactly those names if the review fails, and where to open an issue if something else looks wrong.
+When it finishes, `init` prints what to do next as four steps: add the variables it names to your CI settings, create a new branch (`ci/owlet-lens`), commit the files, and push the branch and open a pull request from it. Then it tells you to watch the review on that pull request, to check that those variables are set with exactly those names if the review fails, where to open an issue if something else looks wrong, and a hint about `owlet-lens install-hook`.
 
 The pipeline files are pinned to the version of the CLI that wrote them (for example `@v1.4.0` on GitHub, `npm install -g @openwt-vn/owlet-lens@1.4.0` on GitLab and Bitbucket), so they keep running that version until you change the tag. The GitLab and Bitbucket files do not include the team lead gate or the `learn` schedule; add those from [`examples/gitlab-ci.yml`](../examples/gitlab-ci.yml) and [`bitbucket-pipelines.yml`](../bitbucket-pipelines.yml) when you need them.
 

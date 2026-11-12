@@ -297,14 +297,15 @@ test('init: pipeline files are pinned to the CLI version, and a given version wi
 test('init: does not ask about or install a git hook', async () => {
   const { cwd, out } = await runWith(['github', 'anthropic', '', '', '', 'n']);
   try {
-    assert.ok(!out.text().includes('pre-commit'));
+    assert.ok(!out.text().includes('Install git pre-commit hook?'));
+    assert.ok(out.text().includes('owlet-lens install-hook'), 'only a hint about the separate command');
     assert.ok(!fs.existsSync(path.join(cwd, '.githooks')));
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
 });
 
-test('init: next steps say branch, commit, push, pull request and watch, in that order', async () => {
+test('init: next steps go branch, commit, push and open a pull request, watch, check, hint', async () => {
   const { cwd, out } = await runWith(['github', 'openai', '', '', '', 'y']);
   try {
     const text = out.text();
@@ -313,14 +314,17 @@ test('init: next steps say branch, commit, push, pull request and watch, in that
       'Add to your CI settings',
       'git checkout -b ci/owlet-lens',
       'git add ai-review.config.yaml .github/workflows/ai-review.yml && git commit',
-      'git push -u origin ci/owlet-lens',
-      'Open a pull request from that branch',
-      'Watch the review on that pull request',
+      'Push the branch, then open a pull request from it:  git push -u origin ci/owlet-lens',
+      'Finally, watch the review on that pull request',
+      'If the review fails, check that OPENAI_API_KEY is set',
+      'Hint: to review before each commit as well, run `owlet-lens install-hook`',
     ].map(at);
     assert.deepEqual(order, [...order].sort((p, q) => p - q));
     assert.ok(text.includes('OPENAI_API_KEY'));
     assert.ok(!text.includes('--dry-run'));
     assert.ok(!text.includes('Test locally'));
+    assert.ok(!text.includes('Open a pull request from that branch'), 'push and PR are one step');
+    assert.equal((text.match(/^  \d\. /gm) || []).length, 4, 'four numbered steps');
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true });
   }
