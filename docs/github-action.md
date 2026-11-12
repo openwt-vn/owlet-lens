@@ -2,6 +2,9 @@
 
 Review every pull request automatically with the GitHub Action. For a one-off review from a terminal, see the [command line](../README.md#command-line) instead; for the other platforms, see [Other platforms](../README.md#other-platforms).
 
+> [!TIP]
+> Prefer the terminal? Run `owlet-lens init` in your repository: it can create the workflow below for you ([details](./usage.md#owlet-lens-init)). You still add the secret yourself.
+
 ## 1. Add a secret
 
 Repo → Settings → Secrets and variables → Actions → `ANTHROPIC_API_KEY` (other providers: [LLM providers](../README.md#choose-an-llm-provider)).

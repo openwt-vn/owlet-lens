@@ -64,7 +64,9 @@ Or run it without installing: `npx @openwt-vn/owlet-lens review --dry-run`.
 | `owlet-lens review` | Review a pull request |
 | `owlet-lens reply` | Judge developer replies in AI threads |
 | `owlet-lens learn` | Propose coding-standards rules from declined findings |
-| `owlet-lens init` | Ask a few questions and create `ai-review.config.yaml` |
+| `owlet-lens init` | Ask a few questions, create `ai-review.config.yaml` and, if you want, the pipeline file for your platform |
+
+To set up a repository from the terminal, run `owlet-lens init` in its root. It writes the config and can create the pipeline file for GitHub, GitLab or Bitbucket Cloud (Azure DevOps has no template yet), then prints the secrets to add in your CI settings. It never overwrites a file that exists. Details: [`owlet-lens init`](./docs/usage.md#owlet-lens-init).
 
 Useful flags: `--dry-run`, `--strict` (exit code 8 on blocking findings), `--config=<path>`, `--provider=<github|bitbucket|gitlab|azure-devops>`, `--force-review`. Environment variables for the other platforms, flags and exit codes: [Usage reference](./docs/usage.md). To work on the code from a clone instead, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 

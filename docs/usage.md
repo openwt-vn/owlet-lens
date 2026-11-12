@@ -48,6 +48,29 @@ node pipelines/scripts/ai-review.js review [--config=path] [--provider=github]
 node pipelines/scripts/ai-review.js reply  [--config=path] [--provider=github]
 ```
 
+### `owlet-lens init`
+
+Run it in the root of your repository to set Owlet Lens up. It needs an interactive terminal and asks, in this order:
+
+1. Review provider (`github`, `bitbucket`, `gitlab`, `azure-devops`).
+2. LLM provider, review model and reply model. The model is required when the LLM provider has no default (`modelstack`, `openrouter`).
+3. Coding standards file path (optional).
+4. Whether to install a git pre-commit hook (only inside a git repository). The hook runs `owlet-lens review --dry-run`, so the CLI must be on the `PATH` of whoever commits.
+5. Whether to create the pipeline file for your platform.
+
+It writes `ai-review.config.yaml` (an existing one is backed up first) and, if you say yes to the last question, one pipeline file:
+
+| Review provider | File created | Variables you add yourself |
+|---|---|---|
+| `github` | `.github/workflows/ai-review.yml` (calls the [reusable workflow](./github-action.md) at `@v1`) | your LLM key as a secret |
+| `gitlab` | `.gitlab-ci.yml` | your LLM key, `GITLAB_TOKEN` (`api` scope) |
+| `bitbucket` | `bitbucket-pipelines.yml` | your LLM key, `AI_REVIEW_TOKEN` (`pullrequest:write`) |
+| `azure-devops` | none: there is no template yet, init prints where to start | your LLM key, a PAT |
+
+`init` never overwrites a pipeline file that already exists. It writes the template next to it with a `.owlet-lens` suffix (for example `.gitlab-ci.yml.owlet-lens`) and tells you to merge it by hand. It also never sets secrets for you: it prints the names to add in your CI settings.
+
+The GitLab and Bitbucket files install the CLI from npm (`npm install -g @openwt-vn/owlet-lens`), so they track the latest published version. Pin a version in that line if you want repeatable runs. They do not include the team lead gate or the `learn` schedule; add those from [`examples/gitlab-ci.yml`](../examples/gitlab-ci.yml) and [`bitbucket-pipelines.yml`](../bitbucket-pipelines.yml) when you need them.
+
 ## Strict mode
 
 Pass `--strict` to fail CI when the AI posts findings at or above `review.severityThreshold` (default `medium`). Exit code is `8` when triggered. The check stays red on every later push while such a thread is still open: it clears when the finding is fixed or a reply argues it to `wontfix`, not when someone presses Resolve ([ADR-0016](./adr/0016-strict-gate-counts-open-blocking-threads.md)).
