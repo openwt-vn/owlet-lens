@@ -209,6 +209,14 @@ class IReviewProvider {
   /** @param {string} markerKey @param {string} body @returns {Promise<SummaryUpsertResult>} */
   async upsertSummaryComment(markerKey, body) { throw new Error('IReviewProvider.upsertSummaryComment not implemented'); }
   /**
+   * Delete the bot's own PR-level comment carrying `markerKey`, if any.
+   * Used by the PR-size advisory to clear the sticky warning when limits no
+   * longer apply (ADR-0018). Returns `absent` when nothing matched.
+   * @param {string} _markerKey
+   * @returns {Promise<{ id: string, action: 'deleted'|'absent' }>}
+   */
+  async deleteBotComment(_markerKey) { throw new Error('IReviewProvider.deleteBotComment not implemented'); }
+  /**
    * This provider's marker codec — the single owner of every on-wire marker
    * form (status, fingerprint, key markers, status-reply prose). Concrete
    * providers override with a codec bound to their resolved wire style; the

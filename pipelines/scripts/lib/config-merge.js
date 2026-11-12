@@ -20,6 +20,10 @@ const DEFAULTS = Object.freeze({
     apiBaseUrl: null,
     maxFindings: 25,
     maxFileBytes: null,
+    // PR-size advisory (ADR-0018): comment-only; null = off.
+    maxFiles: null,
+    maxChangedLines: null,
+    maxChangedLinesPerFile: null,
     tokenBudget: 512000,
     latencyWarnMs: 300000,
     severityThreshold: 'medium',

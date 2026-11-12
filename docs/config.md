@@ -16,6 +16,9 @@ review:
   severityThreshold: medium          # low|medium|high|critical, default medium — see Noise reduction
   testFileSeverityThreshold: high    # low|medium|high|critical, default high — see Noise reduction
   tokenBudget: 512000                # prompt token budget, default 512000 — see Prompt token budget
+  maxFiles: null                     # optional PR-size advisory — see PR-size advisory
+  maxChangedLines: null              # optional PR-size advisory
+  maxChangedLinesPerFile: null       # optional PR-size advisory
   noiseCategories: [style, naming]   # LOW severity in these categories dropped everywhere, default shown
   skipGeneratedFiles: true           # bypass migrations/fixtures/mocks/snapshots/dist/build/vendor/generated pre-LLM, default true
   skipUnchanged: true                # skip a push whose review fingerprint matches the last full review, default true — see Skip unchanged pushes
@@ -134,6 +137,16 @@ Wiring: `buildModelChain` (`lib/llm/model-ref.js`), `makeLLMProvider` (`lib/llm/
 ### Large-file bypass
 
 `review.maxFileBytes` (positive integer or `null`, default `null` = off) caps the size of any single file's diff sent to the LLM. Size is the **UTF-8 byte length of the unified-diff patch** (`diffs[].patch`) — what actually hits the prompt — not the full file or the changed-line count. Files whose patch exceeds the cap are bypassed in the review pass via `lib/file-size-filter.js` `partitionBySize(diffs, maxFileBytes)` **before prompt-building** — ahead of `buildPrompt`'s global token-budget skip — so a single oversized file is dropped even when the budget has room. (Annotation is computed once for all changed files in the review pass and simply not forwarded for bypassed ones.) Every uncovered file (bypassed, budget-dropped, or in a failed chunk) is listed in one `prompt.files.skipped` warn log, and its existing threads are never auto-closed (see Coverage in `CONTEXT.md`). A missing/non-string patch counts as 0 bytes and is always kept; `null`/`0`/negative disables the cap. Validated at load — non-positive or non-integer values raise `ConfigError`.
+
+### PR-size advisory
+
+`review.maxFiles`, `review.maxChangedLines`, and `review.maxChangedLinesPerFile` (each a positive integer or `null`, default `null` = off) are an optional **PR-size advisory** ([ADR-0018](./adr/0018-pr-size-advisory.md), glossary in `CONTEXT.md`). They do **not** bypass files, hold the review, or fail the run by themselves — the LLM still runs. When any configured limit is exceeded, the bot upserts a sticky PR comment under the `size-advisory` marker listing every breached limit; when none are exceeded anymore, it deletes that comment. Upsert/delete counts as review activity (exit `1`) if it is the only write.
+
+**What is counted.** The **advisory set** is every changed file after `paths.exclude` and boilerplate (`review.skipGeneratedFiles`), and **before** `review.maxFileBytes`. A file the LLM later skips for bytes still counts here. Changed lines are **added + removed** lines in the unified-diff patch (not net, not context, not `---`/`+++` headers). The three keys are independent: any one that is set and crossed is enough to keep the comment.
+
+**Azure DevOps note.** That provider sometimes synthesizes a whole-file `+` patch, so churn can look larger than on GitHub/GitLab/Bitbucket for the same edit. The formula stays the same across providers.
+
+These keys are separate from `review.maxFileBytes` (per-file byte bypass) and `review.tokenBudget` (prompt chunking). The sticky summary's `N reviewed · M skipped` line only reports Coverage skips; it is not this advisory.
 
 ### Prompt token budget
 

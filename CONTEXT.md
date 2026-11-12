@@ -71,3 +71,9 @@ _Avoid_: "diff hash" (the raw diff changes on a merge; the fingerprint does not)
 An open (`active`) bot finding thread from an earlier run whose stored severity is at or above `review.severityThreshold`. With `review.strict` on, it keeps the run at exit 8, on full reviews and skips, until the bot marks it `fixed` or `wontfix`. The platform's Resolve button does not clear it ([ADR-0016](./docs/adr/0016-strict-gate-counts-open-blocking-threads.md)).
 
 _Avoid_: "stale finding" (the finding is current; only its thread is older than this run).
+
+## PR-size advisory
+
+An optional, comment-only warning that a PR's file count or changed-line churn (added + removed) has crossed one or more of `review.maxFiles`, `review.maxChangedLines`, or `review.maxChangedLinesPerFile`. It does not bypass files, hold the review, or change the exit code by itself; the review still runs. Counts use the **advisory set**: after `paths.exclude` and boilerplate, and deliberately before `review.maxFileBytes` ([ADR-0018](./docs/adr/0018-pr-size-advisory.md)). The bot keeps one sticky PR comment under the `size-advisory` marker while any configured limit is exceeded, and deletes it when none are.
+
+_Avoid_: "size gate", "maxFileBytes bypass", "token budget overflow", "uncovered" (those are technical limits or Coverage, not this warning).

@@ -410,4 +410,32 @@ async function upsertSummaryComment(p, markerKey, body) {
   return { id: String(data.id), action: 'created' };
 }
 
-module.exports = { postThreadsBatch, postThread, replyToThread, patchThreadStatus, upsertSummaryComment };
+/**
+ * Delete the bot's own issue comment carrying `markerKey`, if any.
+ * @param {GitHubProvider} p
+ * @param {string} markerKey
+ * @returns {Promise<{ id: string, action: 'deleted'|'absent' }>}
+ */
+async function deleteBotComment(p, markerKey) {
+  const comments = await p._paginate(
+    'GET /repos/{owner}/{repo}/issues/{issue_number}/comments',
+    p.rest.issues.listComments.bind(p.rest.issues),
+    { owner: p.owner, repo: p.repo, issue_number: p.prNumber },
+  );
+  const existing = comments.find((c) => p.codec.hasKey(c.body ?? '', markerKey) && isBotComment(c));
+  if (!existing) return { id: '', action: 'absent' };
+  try {
+    await p.rest.issues.deleteComment({
+      owner: p.owner, repo: p.repo, comment_id: existing.id,
+    });
+    return { id: String(existing.id), action: 'deleted' };
+  } catch (e) {
+    if (e?.status === 404) return { id: String(existing.id), action: 'absent' };
+    throw e;
+  }
+}
+
+module.exports = {
+  postThreadsBatch, postThread, replyToThread, patchThreadStatus,
+  upsertSummaryComment, deleteBotComment,
+};

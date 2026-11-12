@@ -475,6 +475,9 @@ class BitbucketCloudReviewProvider extends IReviewProvider {
    */
   async upsertSummaryComment(markerKey, body) { return bitbucketWrite.upsertSummaryComment(this, markerKey, body); }
 
+  /** @param {string} markerKey @returns {Promise<{ id: string, action: 'deleted'|'absent' }>} */
+  async deleteBotComment(markerKey) { return bitbucketWrite.deleteBotComment(this, markerKey); }
+
   /** @returns {Promise<'html'|'bitbucket'>} */
   async resolveMarkerStyle() { return bitbucketWrite.resolveMarkerStyle(this); }
 

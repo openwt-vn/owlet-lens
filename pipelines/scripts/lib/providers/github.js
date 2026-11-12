@@ -459,6 +459,9 @@ class GitHubReviewProvider extends IReviewProvider {
    * @returns {Promise<import('./provider.types.js').SummaryUpsertResult>}
    */
   async upsertSummaryComment(markerKey, body) { return githubWrite.upsertSummaryComment(this, markerKey, body); }
+
+  /** @param {string} markerKey @returns {Promise<{ id: string, action: 'deleted'|'absent' }>} */
+  async deleteBotComment(markerKey) { return githubWrite.deleteBotComment(this, markerKey); }
 }
 
 module.exports = {

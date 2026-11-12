@@ -105,6 +105,31 @@ async function upsertSummaryComment(p, markerKey, body) {
 }
 
 /**
+ * Delete the bot's own PR comment carrying `markerKey`, if any.
+ * @param {BitbucketProvider} p
+ * @param {string} markerKey
+ * @returns {Promise<{ id: string, action: 'deleted'|'absent' }>}
+ */
+async function deleteBotComment(p, markerKey) {
+  p._requirePr();
+  const comments = (await p._fetchAllComments()).filter((c) => !c.deleted);
+  p._inferSelfFromComments(comments);
+  const existing = comments.find(
+    (c) => p.codec.hasKey(c.content?.raw ?? '', markerKey) && p._isSelf(c),
+  );
+  if (!existing) return { id: '', action: 'absent' };
+  try {
+    await p._api('DELETE', `${p._repoPath()}/pullrequests/${p.prId}/comments/${existing.id}`);
+    return { id: String(existing.id), action: 'deleted' };
+  } catch (e) {
+    if (e instanceof ProviderError && e.status === 404) {
+      return { id: String(existing.id), action: 'absent' };
+    }
+    throw e;
+  }
+}
+
+/**
  * Resolve which marker delimiter to use. Posts a throwaway HTML-comment
  * token, re-reads the comment, and picks `html` ONLY when the token both
  * survives in `content.raw` (so cross-run parsing works) AND is absent from
@@ -241,4 +266,7 @@ async function patchThreadStatus(p, threadId, status, opts) {
   }
 }
 
-module.exports = { postThread, replyToThread, upsertSummaryComment, resolveMarkerStyle, patchThreadStatus };
+module.exports = {
+  postThread, replyToThread, upsertSummaryComment, deleteBotComment,
+  resolveMarkerStyle, patchThreadStatus,
+};

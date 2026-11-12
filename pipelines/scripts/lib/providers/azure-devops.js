@@ -509,6 +509,35 @@ class AzureDevOpsReviewProvider extends IReviewProvider {
     return { id: String(res.id), action: 'created' };
   }
 
+  /** @param {string} markerKey @returns {Promise<{ id: string, action: 'deleted'|'absent' }>} */
+  async deleteBotComment(markerKey) {
+    const prId = this._requirePr();
+    await this._ensureSelfIdentity();
+    const rawThreads = await this._api('GET', this._url(`/pullRequests/${prId}/threads`));
+    const existing = (rawThreads?.value ?? []).find((t) => {
+      if (t.threadContext) return false;
+      const root = (t.comments ?? []).filter((c) => !c.isDeleted)[0];
+      return root && this.codec.hasKey(root.content ?? '', markerKey) && this._isBotComment(root);
+    });
+    if (!existing) return { id: '', action: 'absent' };
+    const root = (existing.comments ?? []).filter((c) => !c.isDeleted)[0];
+    if (!root) return { id: String(existing.id), action: 'absent' };
+    try {
+      // Soft-delete the root comment; Azure keeps the thread shell.
+      await this._api(
+        'PATCH',
+        this._url(`/pullRequests/${prId}/threads/${existing.id}/comments/${root.id}`),
+        { body: { isDeleted: true } },
+      );
+      return { id: String(existing.id), action: 'deleted' };
+    } catch (e) {
+      if (e instanceof ProviderError && e.status === 404) {
+        return { id: String(existing.id), action: 'absent' };
+      }
+      throw e;
+    }
+  }
+
   /** @returns {Promise<string>} */
   async getDefaultBranch() {
     if (this._defaultBranch) return this._defaultBranch;

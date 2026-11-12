@@ -350,6 +350,12 @@ function validateConfig({ merged, env, unresolvedByPath, onWarn }) {
   };
   merged.review.maxFileBytes = parsePositiveIntOrNull(merged.review.maxFileBytes, 'review.maxFileBytes');
   merged.review.maxFindings = parsePositiveIntOrNull(merged.review.maxFindings, 'review.maxFindings');
+  merged.review.maxFiles = parsePositiveIntOrNull(merged.review.maxFiles, 'review.maxFiles');
+  merged.review.maxChangedLines = parsePositiveIntOrNull(merged.review.maxChangedLines, 'review.maxChangedLines');
+  merged.review.maxChangedLinesPerFile = parsePositiveIntOrNull(
+    merged.review.maxChangedLinesPerFile,
+    'review.maxChangedLinesPerFile',
+  );
 
   // Prompt token budget for the main review call and its overflow chunks.
   // Always a positive integer so the budget stays the hard constraint

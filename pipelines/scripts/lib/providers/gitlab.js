@@ -347,6 +347,23 @@ class GitLabReviewProvider extends IReviewProvider {
     return { id: String(created.id), action: 'created' };
   }
 
+  /** @param {string} markerKey @returns {Promise<{ id: string, action: 'deleted'|'absent' }>} */
+  async deleteBotComment(markerKey) {
+    const iid = this._requireMr();
+    const notes = await this._paginate(`${this._mrPath(iid)}/notes`);
+    const existing = notes.find((n) => this.codec.hasKey(n.body ?? '', markerKey) && isBotNote(n));
+    if (!existing) return { id: '', action: 'absent' };
+    try {
+      await this._api(`${this._mrPath(iid)}/notes/${existing.id}`, { method: 'DELETE' });
+      return { id: String(existing.id), action: 'deleted' };
+    } catch (e) {
+      if (e instanceof ProviderError && e.status === 404) {
+        return { id: String(existing.id), action: 'absent' };
+      }
+      throw e;
+    }
+  }
+
   /** @param {{ sinceISO: string, limit?: number }} opts */
   async listMergedPRs({ sinceISO, limit = 200 }) {
     const since = encodeURIComponent(sinceISO);

@@ -13,6 +13,7 @@ const { computeReviewFingerprint } = require('./lib/review-fingerprint.js');
 const { safeMsg } = require('./lib/log-safe.js');
 const { logEvent } = require('./lib/log-helpers.js');
 const summaryPort = require('./lib/port/summary-port.js');
+const sizeAdvisoryPort = require('./lib/port/size-advisory-port.js');
 const replyEvaluator = require('./lib/port/reply-evaluator.js');
 const replyContextPort = require('./lib/port/reply-context-port.js');
 const {
@@ -117,6 +118,9 @@ async function runReview(opts = {}) {
         category: f.category ?? f.finding?.category,
         ruleId: f.ruleId ?? f.finding?.ruleId,
       }));
+      const sizeDry = await sizeAdvisoryPort.sync(provider, diffs, {
+        review: config.review, excludePaths: config.paths?.exclude, dryRun: true,
+      });
       process.stdout.write(JSON.stringify({
         dryRun: true,
         provider: providerName,
@@ -126,6 +130,7 @@ async function runReview(opts = {}) {
         wouldReopen: project(toReopen),
         wouldClose: project(toClose),
         summaryAction: 'would-create',
+        ...sizeAdvisoryPort.toResultFields(sizeDry),
         costUsd: totalUsd, durationMs: life.elapsedMs(),
         dismissedContext: { count: stats.dismissedCount },
         strict,
@@ -180,6 +185,25 @@ async function runReview(opts = {}) {
       logActionFailure('upsertSummaryComment failed', e, { prId: meta.id });
     }
 
+    // PR-size advisory (ADR-0018): comment-only; never holds the LLM.
+    let sizeAdvisoryAction = 'noop';
+    try {
+      const sizeSync = await sizeAdvisoryPort.sync(provider, diffs, {
+        review: config.review, excludePaths: config.paths?.exclude,
+      });
+      sizeAdvisoryAction = sizeSync.action;
+      if (sizeSync.evaluation.exceeded) {
+        logEvent('warn', 'review.sizeAdvisory.exceeded', {
+          breaches: sizeSync.evaluation.breaches,
+          files: sizeSync.evaluation.metrics.files,
+          changedLines: sizeSync.evaluation.metrics.changedLines,
+        });
+      }
+    } catch (e) {
+      failures += 1;
+      logActionFailure('size-advisory sync failed', e, { prId: meta.id });
+    }
+
     const reviewDurationMs = life.elapsedMs();
     const latencyWarnMs = config.review.latencyWarnMs;
     if (latencyWarnMs && reviewDurationMs > latencyWarnMs) {
@@ -192,7 +216,7 @@ async function runReview(opts = {}) {
       provider: providerName, prId: meta.id,
       posted: ledger.posted, replied: ledger.replied,
       reopened: ledger.reopened, closed: ledger.closed,
-      failures, failedChunks, summaryAction,
+      failures, failedChunks, summaryAction, sizeAdvisoryAction,
       costUsd: totalUsd, durationMs: reviewDurationMs,
       dismissedContext: { count: stats.dismissedCount },
       strict,
@@ -243,7 +267,8 @@ async function runReview(opts = {}) {
     // finding slip through the gate. `failures` still lands in the JSON.
     if (strict.triggered) return 8;
     if (failures > 0) return 6;
-    return (ledger.posted + ledger.replied + ledger.reopened + ledger.closed) > 0 ? 1 : 0;
+    const findingActivity = (ledger.posted + ledger.replied + ledger.reopened + ledger.closed) > 0;
+    return (findingActivity || sizeAdvisoryPort.wroteAction(sizeAdvisoryAction)) ? 1 : 0;
   });
 }
 
