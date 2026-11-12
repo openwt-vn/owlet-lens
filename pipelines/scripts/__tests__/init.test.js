@@ -9,6 +9,8 @@ const os = require('node:os');
 const { Readable, Writable } = require('node:stream');
 
 const { runInit } = require('../lib/init.js');
+const { pipelineTemplate, TOOL_VERSION } = require('../lib/init-pipelines.js');
+const version = require('../../../package.json').version;
 
 function makeTmpDir() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-init-test-'));
@@ -210,7 +212,8 @@ test('init: creates the GitHub workflow when asked', async () => {
   try {
     assert.equal(code, 0);
     const wf = fs.readFileSync(path.join(cwd, '.github', 'workflows', 'ai-review.yml'), 'utf8');
-    assert.ok(wf.includes('ai-review-reusable.yml@v1'));
+    assert.ok(wf.includes(`ai-review-reusable.yml@v${version}`));
+    assert.ok(!wf.includes('ai-review-reusable.yml@v1\n'));
     assert.ok(wf.includes("runner: '[\"ubuntu-latest\"]'"));
     assert.ok(wf.includes('secrets: inherit'));
     assert.ok(out.text().includes('Created .github/workflows/ai-review.yml'));
@@ -233,7 +236,7 @@ test('init: creates a GitLab pipeline that runs reply then review', async () => 
   const { cwd, out } = await runWith(['gitlab', 'deepseek', '', '', '', 'n', 'y']);
   try {
     const ci = fs.readFileSync(path.join(cwd, '.gitlab-ci.yml'), 'utf8');
-    assert.ok(ci.includes('npm install -g @openwt-vn/owlet-lens'));
+    assert.ok(ci.includes(`npm install -g @openwt-vn/owlet-lens@${version}`));
     assert.ok(ci.includes('owlet-lens "$cmd" --provider=gitlab'));
     assert.ok(ci.includes('for cmd in reply review; do'));
     assert.ok(ci.includes('merge_request_event'));
@@ -247,6 +250,7 @@ test('init: creates a Bitbucket pipeline with its variables', async () => {
   const { cwd, out } = await runWith(['bitbucket', 'anthropic', '', '', '', 'n', 'y']);
   try {
     const bb = fs.readFileSync(path.join(cwd, 'bitbucket-pipelines.yml'), 'utf8');
+    assert.ok(bb.includes(`npm install -g @openwt-vn/owlet-lens@${version}`));
     assert.ok(bb.includes('owlet-lens "$cmd" --provider=bitbucket'));
     assert.ok(bb.includes('pull-requests:'));
     assert.ok(out.text().includes('ANTHROPIC_API_KEY, AI_REVIEW_TOKEN'));
@@ -304,4 +308,15 @@ test('init: openrouter writes its key field and requires a model', async () => {
   } finally {
     fs.rmSync(ok.cwd, { recursive: true, force: true });
   }
+});
+
+test('init: pipeline files are pinned to the CLI version, and a given version wins', () => {
+  assert.equal(TOOL_VERSION, version);
+  assert.match(version, /^\d+\.\d+\.\d+/);
+  const gh = pipelineTemplate('github', 'ANTHROPIC_API_KEY');
+  assert.ok(gh && gh.content.includes(`ai-review-reusable.yml@v${version}`));
+  const pinned = pipelineTemplate('github', 'ANTHROPIC_API_KEY', '9.8.7');
+  assert.ok(pinned && pinned.content.includes('ai-review-reusable.yml@v9.8.7'));
+  const gl = pipelineTemplate('gitlab', 'ANTHROPIC_API_KEY', '9.8.7');
+  assert.ok(gl && gl.content.includes('owlet-lens@9.8.7'));
 });

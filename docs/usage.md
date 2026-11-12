@@ -62,14 +62,14 @@ It writes `ai-review.config.yaml` (an existing one is backed up first) and, if y
 
 | Review provider | File created | Variables you add yourself |
 |---|---|---|
-| `github` | `.github/workflows/ai-review.yml` (calls the [reusable workflow](./github-action.md) at `@v1`) | your LLM key as a secret |
+| `github` | `.github/workflows/ai-review.yml` (calls the [reusable workflow](./github-action.md), pinned to the version of the CLI that wrote it) | your LLM key as a secret |
 | `gitlab` | `.gitlab-ci.yml` | your LLM key, `GITLAB_TOKEN` (`api` scope) |
 | `bitbucket` | `bitbucket-pipelines.yml` | your LLM key, `AI_REVIEW_TOKEN` (`pullrequest:write`) |
 | `azure-devops` | none: there is no template yet, init prints where to start | your LLM key, a PAT |
 
 `init` never overwrites a pipeline file that already exists. It writes the template next to it with a `.owlet-lens` suffix (for example `.gitlab-ci.yml.owlet-lens`) and tells you to merge it by hand. It also never sets secrets for you: it prints the names to add in your CI settings.
 
-The GitLab and Bitbucket files install the CLI from npm (`npm install -g @openwt-vn/owlet-lens`), so they track the latest published version. Pin a version in that line if you want repeatable runs. They do not include the team lead gate or the `learn` schedule; add those from [`examples/gitlab-ci.yml`](../examples/gitlab-ci.yml) and [`bitbucket-pipelines.yml`](../bitbucket-pipelines.yml) when you need them.
+The pipeline files are pinned to the version of the CLI that wrote them (for example `@v1.4.0` on GitHub, `npm install -g @openwt-vn/owlet-lens@1.4.0` on GitLab and Bitbucket), so they keep running that version until you change the tag. The GitLab and Bitbucket files do not include the team lead gate or the `learn` schedule; add those from [`examples/gitlab-ci.yml`](../examples/gitlab-ci.yml) and [`bitbucket-pipelines.yml`](../bitbucket-pipelines.yml) when you need them.
 
 ## Strict mode
 
