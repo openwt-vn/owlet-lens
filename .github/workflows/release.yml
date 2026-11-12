@@ -48,9 +48,29 @@ jobs:
           git push -f origin "$REF_NAME" "$MAJOR"
       # The GitHub Release comes before the npm publish, so an npm failure cannot take it away.
       # Third-party action in a job with write access: pinned to a commit (v3.0.4), not to a tag that can move.
+      # The notes list only what changed since the previous version. GitHub's own "generate release
+      # notes" finds no previous tag here (the version tags point at release commits that are not on
+      # main, so no tag is an ancestor of the next one) and falls back to the whole history. So the
+      # previous version tag is picked here and passed to the API explicitly.
+      - name: Release notes since the previous version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF_NAME: ${{ github.ref_name }}
+          NOTES_FILE: ${{ runner.temp }}/release-notes.md
+        run: |
+          PREV=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=v:refname \
+            | awk -v t="$REF_NAME" '$0==t {print prev; exit} {prev=$0}')
+          echo "Previous version tag: ${PREV:-none (first release)}"
+          if [ -n "$PREV" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+              -f tag_name="$REF_NAME" -f previous_tag_name="$PREV" --jq .body > "$NOTES_FILE"
+          else
+            gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+              -f tag_name="$REF_NAME" --jq .body > "$NOTES_FILE"
+          fi
       - uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
-          generate_release_notes: true
+          body_path: ${{ runner.temp }}/release-notes.md
       # Publishes @openwt-vn/owlet-lens with the dist/cli built above. The package must list this
       # repository and this workflow file as its trusted publisher on npmjs.com (package Settings).
       # It needs a GitHub-hosted runner: npm does not support self-hosted runners for this yet.
