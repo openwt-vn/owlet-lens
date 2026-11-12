@@ -45,7 +45,7 @@ test('init: generates config with anthropic defaults', async () => {
   try {
     const out = captureStdout();
     const code = await runInit({
-      stdin: fakeStdin(['github', 'anthropic', '', '', '', 'n', 'n']),
+      stdin: fakeStdin(['github', 'anthropic', '', '', '', 'n']),
       stdout: out.stream,
       cwd,
     });
@@ -66,7 +66,7 @@ test('init: generates config with gemini provider', async () => {
   try {
     const out = captureStdout();
     const code = await runInit({
-      stdin: fakeStdin(['github', 'gemini', '', '', '', 'n', 'n']),
+      stdin: fakeStdin(['github', 'gemini', '', '', '', 'n']),
       stdout: out.stream,
       cwd,
     });
@@ -84,7 +84,7 @@ test('init: unknown LLM provider falls back to anthropic', async () => {
   try {
     const out = captureStdout();
     const code = await runInit({
-      stdin: fakeStdin(['github', 'bogus', '', '', '', 'n', 'n']),
+      stdin: fakeStdin(['github', 'bogus', '', '', '', 'n']),
       stdout: out.stream,
       cwd,
     });
@@ -102,7 +102,7 @@ test('init: includes codingStandardsPath when provided', async () => {
   try {
     const out = captureStdout();
     await runInit({
-      stdin: fakeStdin(['github', 'anthropic', '', '', './standards.md', 'n', 'n']),
+      stdin: fakeStdin(['github', 'anthropic', '', '', './standards.md', 'n']),
       stdout: out.stream,
       cwd,
     });
@@ -118,7 +118,7 @@ test('init: omits codingStandardsPath when empty', async () => {
   try {
     const out = captureStdout();
     await runInit({
-      stdin: fakeStdin(['github', 'anthropic', '', '', '', 'n', 'n']),
+      stdin: fakeStdin(['github', 'anthropic', '', '', '', 'n']),
       stdout: out.stream,
       cwd,
     });
@@ -136,7 +136,7 @@ test('init: backs up existing config on overwrite', async () => {
     fs.writeFileSync(configPath, 'old: true\n');
     const out = captureStdout();
     await runInit({
-      stdin: fakeStdin(['y', 'github', 'anthropic', '', '', '', 'n', 'n']),
+      stdin: fakeStdin(['y', 'github', 'anthropic', '', '', '', 'n']),
       stdout: out.stream,
       cwd,
     });
@@ -168,28 +168,12 @@ test('init: keeps existing config when user declines overwrite', async () => {
   }
 });
 
-test('init: skips hook when not a git repo', async () => {
-  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-init-nogit-'));
-  try {
-    const out = captureStdout();
-    await runInit({
-      stdin: fakeStdin(['github', 'anthropic', '', '', '', '']),
-      stdout: out.stream,
-      cwd,
-    });
-    assert.ok(out.text().includes('Not a git repository'));
-    assert.ok(!fs.existsSync(path.join(cwd, '.githooks')));
-  } finally {
-    fs.rmSync(cwd, { recursive: true, force: true });
-  }
-});
-
 test('init: prints next steps with correct env var', async () => {
   const cwd = makeTmpDir();
   try {
     const out = captureStdout();
     await runInit({
-      stdin: fakeStdin(['github', 'gemini', '', '', '', 'n', 'n']),
+      stdin: fakeStdin(['github', 'gemini', '', '', '', 'n']),
       stdout: out.stream,
       cwd,
     });
@@ -208,7 +192,7 @@ async function runWith(answers, setup) {
 }
 
 test('init: creates the GitHub workflow when asked', async () => {
-  const { cwd, out, code } = await runWith(['github', 'anthropic', '', '', '', 'n', 'y']);
+  const { cwd, out, code } = await runWith(['github', 'anthropic', '', '', '', 'y']);
   try {
     assert.equal(code, 0);
     const wf = fs.readFileSync(path.join(cwd, '.github', 'workflows', 'ai-review.yml'), 'utf8');
@@ -224,7 +208,7 @@ test('init: creates the GitHub workflow when asked', async () => {
 });
 
 test('init: writes no pipeline file when the answer is n', async () => {
-  const { cwd } = await runWith(['github', 'anthropic', '', '', '', 'n', 'n']);
+  const { cwd } = await runWith(['github', 'anthropic', '', '', '', 'n']);
   try {
     assert.ok(!fs.existsSync(path.join(cwd, '.github')));
   } finally {
@@ -233,7 +217,7 @@ test('init: writes no pipeline file when the answer is n', async () => {
 });
 
 test('init: creates a GitLab pipeline that runs reply then review', async () => {
-  const { cwd, out } = await runWith(['gitlab', 'deepseek', '', '', '', 'n', 'y']);
+  const { cwd, out } = await runWith(['gitlab', 'deepseek', '', '', '', 'y']);
   try {
     const ci = fs.readFileSync(path.join(cwd, '.gitlab-ci.yml'), 'utf8');
     assert.ok(ci.includes(`npm install -g @openwt-vn/owlet-lens@${version}`));
@@ -247,7 +231,7 @@ test('init: creates a GitLab pipeline that runs reply then review', async () => 
 });
 
 test('init: creates a Bitbucket pipeline with its variables', async () => {
-  const { cwd, out } = await runWith(['bitbucket', 'anthropic', '', '', '', 'n', 'y']);
+  const { cwd, out } = await runWith(['bitbucket', 'anthropic', '', '', '', 'y']);
   try {
     const bb = fs.readFileSync(path.join(cwd, 'bitbucket-pipelines.yml'), 'utf8');
     assert.ok(bb.includes(`npm install -g @openwt-vn/owlet-lens@${version}`));
@@ -261,7 +245,7 @@ test('init: creates a Bitbucket pipeline with its variables', async () => {
 
 test('init: never overwrites an existing pipeline file', async () => {
   const { cwd, out } = await runWith(
-    ['gitlab', 'anthropic', '', '', '', 'n', 'y'],
+    ['gitlab', 'anthropic', '', '', '', 'y'],
     (dir) => fs.writeFileSync(path.join(dir, '.gitlab-ci.yml'), 'mine: true\n'),
   );
   try {
@@ -283,25 +267,14 @@ test('init: Azure DevOps has no template and says so', async () => {
   }
 });
 
-test('init: the pre-commit hook calls the installed CLI, not a repo path', async () => {
-  const { cwd } = await runWith(['github', 'anthropic', '', '', '', 'y', 'n']);
-  try {
-    const hook = fs.readFileSync(path.join(cwd, '.githooks', 'pre-commit'), 'utf8');
-    assert.ok(hook.includes('owlet-lens review --dry-run'));
-    assert.ok(!hook.includes('pipelines/scripts'));
-  } finally {
-    fs.rmSync(cwd, { recursive: true, force: true });
-  }
-});
-
 test('init: openrouter writes its key field and requires a model', async () => {
-  const bad = await runWith(['github', 'openrouter', '', '', '', 'n', 'n']);
+  const bad = await runWith(['github', 'openrouter', '', '', '', 'n']);
   try {
     assert.equal(bad.code, 2);
   } finally {
     fs.rmSync(bad.cwd, { recursive: true, force: true });
   }
-  const ok = await runWith(['github', 'openrouter', 'vendor/model-a', 'vendor/model-b', '', 'n', 'n']);
+  const ok = await runWith(['github', 'openrouter', 'vendor/model-a', 'vendor/model-b', '', 'n']);
   try {
     const cfg = fs.readFileSync(path.join(ok.cwd, 'ai-review.config.yaml'), 'utf8');
     assert.ok(cfg.includes('openrouterKey: ${OPENROUTER_API_KEY}'));
@@ -319,4 +292,58 @@ test('init: pipeline files are pinned to the CLI version, and a given version wi
   assert.ok(pinned && pinned.content.includes('ai-review-reusable.yml@v9.8.7'));
   const gl = pipelineTemplate('gitlab', 'ANTHROPIC_API_KEY', '9.8.7');
   assert.ok(gl && gl.content.includes('owlet-lens@9.8.7'));
+});
+
+test('init: does not ask about or install a git hook', async () => {
+  const { cwd, out } = await runWith(['github', 'anthropic', '', '', '', 'n']);
+  try {
+    assert.ok(!out.text().includes('pre-commit'));
+    assert.ok(!fs.existsSync(path.join(cwd, '.githooks')));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('init: next steps say branch, commit, push, pull request and watch, in that order', async () => {
+  const { cwd, out } = await runWith(['github', 'openai', '', '', '', 'y']);
+  try {
+    const text = out.text();
+    const at = (s) => { const i = text.indexOf(s); assert.ok(i >= 0, `missing: ${s}`); return i; };
+    const order = [
+      'Add to your CI settings',
+      'git checkout -b ci/owlet-lens',
+      'git add ai-review.config.yaml .github/workflows/ai-review.yml && git commit',
+      'git push -u origin ci/owlet-lens',
+      'Open a pull request from that branch',
+      'Watch the review on that pull request',
+    ].map(at);
+    assert.deepEqual(order, [...order].sort((p, q) => p - q));
+    assert.ok(text.includes('OPENAI_API_KEY'));
+    assert.ok(!text.includes('--dry-run'));
+    assert.ok(!text.includes('Test locally'));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('init: next steps tell the user to check the variable and to open an issue', async () => {
+  const { cwd, out } = await runWith(['gitlab', 'deepseek', '', '', '', 'y']);
+  try {
+    const text = out.text();
+    assert.ok(text.includes('If the review fails, check that DEEPSEEK_API_KEY, GITLAB_TOKEN are set'));
+    assert.ok(text.includes('https://github.com/openwt-vn/owlet-lens/issues'));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('init: without a pipeline file the next steps do not commit one', async () => {
+  const { cwd, out } = await runWith(['github', 'anthropic', '', '', '', 'n']);
+  try {
+    const text = out.text();
+    assert.ok(text.includes('git add ai-review.config.yaml && git commit'));
+    assert.ok(text.includes('run init again and answer y'));
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true });
+  }
 });

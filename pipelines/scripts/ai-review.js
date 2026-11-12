@@ -456,6 +456,9 @@ if (require.main === module) {
   } else if (flags.subcommand === 'init') {
     const { runInit } = require('./lib/init.js');
     runInit().then((c) => process.exit(c ?? 0));
+  } else if (flags.subcommand === 'install-hook') {
+    const { runInstallHook } = require('./lib/install-hook.js');
+    runInstallHook().then((c) => process.exit(c ?? 0));
   } else {
     runReview().then((c) => process.exit(c ?? 0));
   }

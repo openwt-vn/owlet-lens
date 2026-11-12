@@ -67,7 +67,9 @@ It asks for your platform (`github`, `gitlab`, `bitbucket` or `azure-devops`), y
 
 `init` does not put any key or token in the files, and it cannot set secrets for you. It prints the names to add. On GitHub, open Settings, Secrets and variables, Actions, and add `ANTHROPIC_API_KEY` (or the key of the provider you chose: [LLM providers](#choose-an-llm-provider)). GitLab and Bitbucket also need an access token; `init` prints which one.
 
-**4. Commit, push and open a pull request**
+**4. Commit on a new branch, push, and open a pull request**
+
+`init` prints these commands at the end, with the file names filled in:
 
 ```bash
 git checkout -b ci/owlet-lens
@@ -76,7 +78,7 @@ git commit -m "ci: add Owlet Lens"
 git push -u origin ci/owlet-lens
 ```
 
-Open a pull request from that branch and merge it. From then on, every pull request in the repository is reviewed. Use the path of the pipeline file `init` created for your platform in the `git add` line.
+Open a pull request from that branch and watch the review on it: findings appear there as comments within a minute or two. If the review fails, check that the variable from step 3 is set with exactly that name. If something else looks wrong, [open an issue](https://github.com/openwt-vn/owlet-lens/issues). Use the path of the pipeline file `init` created for your platform in the `git add` line.
 
 More on what `init` asks and creates: [`owlet-lens init`](./docs/usage.md#owlet-lens-init). The GitHub workflow in detail: [GitHub Action setup](./docs/github-action.md).
 
@@ -98,6 +100,7 @@ Or run it without installing: `npx @openwt-vn/owlet-lens review --dry-run`.
 | `owlet-lens reply` | Judge developer replies in AI threads |
 | `owlet-lens learn` | Propose coding-standards rules from declined findings |
 | `owlet-lens init` | Ask a few questions, create `ai-review.config.yaml` and, if you want, the pipeline file for your platform |
+| `owlet-lens install-hook` | Install a git pre-commit hook that runs the review before each commit (optional, needs environment variables) |
 
 Useful flags: `--dry-run`, `--strict` (exit code 8 on blocking findings), `--config=<path>`, `--provider=<github|bitbucket|gitlab|azure-devops>`, `--force-review`. Environment variables for the other platforms, flags and exit codes: [Usage reference](./docs/usage.md). To work on the code from a clone instead, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 

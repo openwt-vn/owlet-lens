@@ -55,10 +55,9 @@ Run it in the root of your repository to set Owlet Lens up. It needs an interact
 1. Review provider (`github`, `bitbucket`, `gitlab`, `azure-devops`).
 2. LLM provider, review model and reply model. The model is required when the LLM provider has no default (`modelstack`, `openrouter`).
 3. Coding standards file path (optional).
-4. Whether to install a git pre-commit hook (only inside a git repository). The hook runs `owlet-lens review --dry-run`, so the CLI must be on the `PATH` of whoever commits.
-5. Whether to create the pipeline file for your platform.
+4. Whether to create the pipeline file for your platform.
 
-It writes `ai-review.config.yaml` (an existing one is backed up first) and, if you say yes to the last question, one pipeline file:
+It writes `ai-review.config.yaml` (an existing one is backed up first) and, if you say yes to the last question, one pipeline file. It does not install a git hook: that is a separate command, [`owlet-lens install-hook`](#owlet-lens-install-hook).
 
 | Review provider | File created | Variables you add yourself |
 |---|---|---|
@@ -69,7 +68,17 @@ It writes `ai-review.config.yaml` (an existing one is backed up first) and, if y
 
 `init` never overwrites a pipeline file that already exists. It writes the template next to it with a `.owlet-lens` suffix (for example `.gitlab-ci.yml.owlet-lens`) and tells you to merge it by hand. It also never sets secrets for you: it prints the names to add in your CI settings.
 
+When it finishes, `init` prints what to do next: add the variables it names to your CI settings, create a new branch (`ci/owlet-lens`), commit the files, push, open a pull request, and watch the review on that pull request. It also reminds you to check that those variables are set with exactly those names if the review fails, and where to open an issue if something else looks wrong.
+
 The pipeline files are pinned to the version of the CLI that wrote them (for example `@v1.4.0` on GitHub, `npm install -g @openwt-vn/owlet-lens@1.4.0` on GitLab and Bitbucket), so they keep running that version until you change the tag. The GitLab and Bitbucket files do not include the team lead gate or the `learn` schedule; add those from [`examples/gitlab-ci.yml`](../examples/gitlab-ci.yml) and [`bitbucket-pipelines.yml`](../bitbucket-pipelines.yml) when you need them.
+
+### `owlet-lens install-hook`
+
+Installs a git pre-commit hook (`.githooks/pre-commit`) that runs `owlet-lens review --dry-run` before every commit, and sets `core.hooksPath` to `.githooks`. It is its own command, not part of `init`, because the hook blocks the commit whenever the review fails. The review needs the same environment variables as `owlet-lens review`: the token of your platform (for example `GITHUB_TOKEN`), the repository and pull request number (`GITHUB_REPOSITORY`, `GITHUB_PR_NUMBER`) and the key of your LLM provider. Without them the commit is blocked. The command explains this and asks before it changes anything.
+
+- Commit once without the hook: `git commit --no-verify`.
+- Remove the hook: delete `.githooks/pre-commit` and run `git config --unset core.hooksPath`.
+- It never overwrites an existing `.githooks/pre-commit`, and it leaves a `core.hooksPath` that points somewhere else alone.
 
 ## Strict mode
 
