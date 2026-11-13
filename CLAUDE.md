@@ -136,7 +136,11 @@ Config keys and the LEARNED block format: [`docs/config.md`](./docs/config.md#se
 
 ## Release / shipping
 
-**Version bumps are explicit only**. Never bump automatically. When the user says "ship it" / "merge PR", **ask first whether to bump the version, and if so minor or major**. Do not merge or ship without asking. On a yes, bump `package.json` + `package-lock.json` (`npm version <minor|major> --no-git-tag-version`), commit `chore: bump version to X.Y.Z`, tag `vX.Y.Z`, and push the tag. The Release workflow builds `dist/`, commits it to the tag, and force-updates the major-version tag (`v2`).
+**Version bumps are explicit only**. Never bump automatically on merge. When the user says "ship it" / "merge PR", **ask first whether to bump the version, and if so patch, minor or major**. Do not merge or ship without asking.
+
+Preferred ship path: GitHub Actions → **Release** → Run workflow → choose `patch` / `minor` / `major`. That path runs the **release change gate**, bumps on `main`, pushes `vX.Y.Z`, and the tag job publishes ([ADR-0022](./docs/adr/0022-manual-release-change-gate.md)). Locally you can still bump + tag yourself; the tag job applies the same gate.
+
+The Release workflow builds `dist/`, commits it to the tag, and force-updates the major-version tag (`v1`).
 
 **Never commit `dist/`** in feature branches or PRs ([ADR-0006](./docs/adr/0006-dist-built-only-by-release.md)).
 

@@ -77,3 +77,15 @@ _Avoid_: "stale finding" (the finding is current; only its thread is older than 
 An optional, comment-only warning that a PR's file count or changed-line churn (added + removed) has crossed one or more of `review.maxFiles`, `review.maxChangedLines`, or `review.maxChangedLinesPerFile`. It does not bypass files, hold the review, or change the exit code by itself; the review still runs. Counts use the **advisory set**: after `paths.exclude` and boilerplate, and deliberately before `review.maxFileBytes` ([ADR-0018](./docs/adr/0018-pr-size-advisory.md)). The bot keeps one sticky PR comment under the `size-advisory` marker while any configured limit is exceeded, and deletes it when none are.
 
 _Avoid_: "size gate", "maxFileBytes bypass", "token budget overflow", "uncovered" (those are technical limits or Coverage, not this warning).
+
+## Release change gate
+
+The check that refuses a new Owlet version when the tree being released does not meaningfully differ from the previous semver tag. Owlet's own version stamp in `package.json` / `package-lock.json` alone is not enough; dependency upgrades and any other file changes are ([ADR-0022](./docs/adr/0022-manual-release-change-gate.md)).
+
+_Avoid_: "CI gate", "TL gate", "strict gate" (those are review-time controls).
+
+## Manual release
+
+Starting the Release workflow from the Actions tab (`workflow_dispatch`) with a `patch` / `minor` / `major` bump so `main` is versioned and tagged without a local `git tag`. Publishing still happens only on the resulting tag push ([ADR-0022](./docs/adr/0022-manual-release-change-gate.md)).
+
+_Avoid_: "auto release on merge" (merging to `main` does not publish).

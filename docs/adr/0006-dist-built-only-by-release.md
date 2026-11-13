@@ -6,4 +6,4 @@ A JavaScript GitHub Action usually commits its bundled `dist/` so that `uses: â€
 
 - Never commit `dist/` in a feature branch or PR.
 - `uses: â€¦@main` or `@<sha>` will not run. Test unreleased changes via a tag or by running the scripts directly.
-- Version bumps are explicit (see CLAUDE.md, "Release / shipping"). No release happens automatically.
+- Version bumps are explicit (see CLAUDE.md, "Release / shipping"). Merging to `main` does not publish. Manual release and the change gate are in [ADR-0022](./0022-manual-release-change-gate.md).

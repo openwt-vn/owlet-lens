@@ -3,9 +3,63 @@ name: Release
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Semver bump on main (patch / minor / major)
+        required: true
+        type: choice
+        default: patch
+        options:
+          - patch
+          - minor
+          - major
 
+# Manual release (workflow_dispatch) only prepares the version bump + tag.
+# Publish always runs on the tag push so the path stays single (ADR-0022).
 jobs:
+  prepare-tag:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: main
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Release change gate (main vs previous version tag)
+        run: |
+          PREV=$(node -e 'const g=require("./pipelines/scripts/lib/release-change-gate.js"); process.stdout.write(g.previousVersionTag()||"")')
+          echo "Previous version tag: ${PREV:-none}"
+          PREV="$PREV" node -e '
+            const g = require("./pipelines/scripts/lib/release-change-gate.js");
+            const r = g.evaluateReleaseChanges({
+              prevRef: process.env.PREV || null,
+              currRef: "HEAD",
+            });
+            console.log(r.ok ? "gate ok:" : "gate blocked:", r.reason);
+            process.exit(r.ok ? 0 : 1);
+          '
+      - name: Bump version, commit, and push tag
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          npm version "$BUMP" --no-git-tag-version
+          VERSION=$(node -p "require('./package.json').version")
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to $VERSION"
+          git tag "v$VERSION"
+          git push origin HEAD:main
+          git push origin "v$VERSION"
+
   release:
+    if: github.event_name == 'push'
     # Takes the runner from CI_RUNNER like the other workflows. This job pushes tags and main with
     # write access, so it must run on GitHub-hosted runners (the default) as soon as the repository is
     # public: unset CI_RUNNER then. While the repository is private, only people we trust can run it.
@@ -21,6 +75,21 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+      - name: Release change gate (tag vs previous version tag)
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          PREV=$(node -e 'const g=require("./pipelines/scripts/lib/release-change-gate.js"); process.stdout.write(g.previousVersionTag({ exclude: process.env.REF_NAME })||"")')
+          echo "Previous version tag: ${PREV:-none}"
+          PREV="$PREV" CURR="$REF_NAME" node -e '
+            const g = require("./pipelines/scripts/lib/release-change-gate.js");
+            const r = g.evaluateReleaseChanges({
+              prevRef: process.env.PREV || null,
+              currRef: process.env.CURR,
+            });
+            console.log(r.ok ? "gate ok:" : "gate blocked:", r.reason);
+            process.exit(r.ok ? 0 : 1);
+          '
       # The self-hosted runners of one machine share ~/.npm, and installs that run at the same time can
       # corrupt it ("npm error Exit handler never called"). Each job gets its own cache folder, and a
       # failed install is retried once from a clean node_modules.

@@ -24,6 +24,7 @@
 | 0004 | Learn | [The learn pipeline harvests security findings like any other category](./adr/0004-learn-harvests-security-findings.md) |
 | 0005 | LLM | [Model failover tries each model once, and only on retryable errors](./adr/0005-model-failover-single-attempt-per-model.md) (partly superseded by 0021) |
 | 0006 | Release | [`dist/` is gitignored and only the Release workflow commits it](./adr/0006-dist-built-only-by-release.md) |
+| 0022 | Release | [Manual release via workflow_dispatch plus a change gate vs the previous version](./adr/0022-manual-release-change-gate.md) |
 | 0007 | Reply | [Reply verdicts come from an LLM, not a regex](./adr/0007-llm-reply-verdict.md) |
 | 0008 | LLM | [Reflection filter uses batch calls, not per-finding calls](./adr/0008-reflection-filter-batch-not-per-finding.md) |
 | 0009 | LLM | [Reflection skips CRITICAL findings unconditionally](./adr/0009-reflection-skips-critical-findings.md) |
