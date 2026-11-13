@@ -1,13 +1,16 @@
 // @ts-check
 'use strict';
 
-const { execFileSync } = require('node:child_process');
+const { execFile } = require('node:child_process');
+const { promisify } = require('node:util');
 const fs = require('node:fs');
 const path = require('node:path');
 const { ConfigError } = require('../errors.js');
 const { splitUnifiedDiff } = require('../unified-diff-split.js');
 const { makeMarkerCodec } = require('../marker-codec.js');
 const { IReviewProvider, defaultCapabilities } = require('./provider.types.js');
+
+const defaultExecFile = promisify(execFile);
 
 /**
  * Resolve local-bench options from explicit `local` opts and ReviewBench-style env.
@@ -41,6 +44,21 @@ function resolveLocalOpts(opts) {
   };
 }
 
+/**
+ * Resolve a repo-relative path and reject anything that escapes repoDir.
+ * @param {string} repoDir
+ * @param {string} filePath
+ * @returns {string|null}
+ */
+function resolveInsideRepo(repoDir, filePath) {
+  if (typeof filePath !== 'string' || filePath.trim() === '') return null;
+  const root = path.resolve(repoDir);
+  const full = path.resolve(root, filePath);
+  const prefix = root.endsWith(path.sep) ? root : root + path.sep;
+  if (full !== root && !full.startsWith(prefix)) return null;
+  return full;
+}
+
 class LocalReviewProvider extends IReviewProvider {
   /**
    * @param {{
@@ -53,7 +71,9 @@ class LocalReviewProvider extends IReviewProvider {
    *     nwo?: string,
    *     prNumber?: number|string,
    *   },
-   *   deps?: { execFileSync?: typeof execFileSync },
+   *   deps?: {
+   *     execFile?: (cmd: string, args: string[], opts: object) => Promise<{ stdout: string }>,
+   *   },
    * }} opts
    */
   constructor(opts = {}) {
@@ -74,7 +94,7 @@ class LocalReviewProvider extends IReviewProvider {
     this.codec = makeMarkerCodec({ prefix: this.markerPrefix, style: 'html' });
     this.runId = null;
     this.repoSlug = this.nwo;
-    this._execFileSync = opts.deps?.execFileSync ?? execFileSync;
+    this._execFile = opts.deps?.execFile ?? defaultExecFile;
   }
 
   get markers() { return this.codec; }
@@ -119,11 +139,12 @@ class LocalReviewProvider extends IReviewProvider {
   async getDiff() {
     let text;
     try {
-      text = this._execFileSync(
+      const result = await this._execFile(
         'git',
         ['-C', this.repoDir, 'diff', `${this.base}...${this.head}`],
         { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
       );
+      text = typeof result.stdout === 'string' ? result.stdout : String(result.stdout ?? '');
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       throw new ConfigError(`local provider git diff failed: ${msg}`);
@@ -168,8 +189,10 @@ class LocalReviewProvider extends IReviewProvider {
    * @param {string} _ref
    */
   async getFileContent(filePath, _ref) {
+    const full = resolveInsideRepo(this.repoDir, filePath);
+    if (!full) return null;
     try {
-      return fs.readFileSync(path.join(this.repoDir, filePath), 'utf8');
+      return await fs.promises.readFile(full, 'utf8');
     } catch {
       return null;
     }
@@ -203,4 +226,6 @@ function localProviderOpts(cliFlags, env) {
   };
 }
 
-module.exports = { LocalReviewProvider, resolveLocalOpts, localProviderOpts };
+module.exports = {
+  LocalReviewProvider, resolveLocalOpts, localProviderOpts, resolveInsideRepo,
+};

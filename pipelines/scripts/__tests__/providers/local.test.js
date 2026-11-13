@@ -87,3 +87,17 @@ test('local listThreads empty; writes are no-ops', async () => {
   await assert.doesNotReject(() => p.deleteBotComment('summary'));
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+test('local getFileContent reads inside the repo and rejects traversal', async () => {
+  const { dir, base, head } = makeTwoCommitRepo();
+  const p = makeProvider('local', {
+    config: { auth: {} },
+    env: {},
+    local: { repoDir: dir, base, head },
+  });
+  const body = await p.getFileContent('a.js', head);
+  assert.match(body ?? '', /const y = 2/);
+  assert.equal(await p.getFileContent('../outside.js', head), null);
+  assert.equal(await p.getFileContent('../../etc/passwd', head), null);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
