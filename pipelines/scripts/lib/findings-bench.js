@@ -94,4 +94,37 @@ function writeReviewBenchFindingsFile(opts) {
   return { agent, findingCount: doc.findings.length };
 }
 
-module.exports = { toReviewBenchFindings, resolveFindingsOut, writeReviewBenchFindingsFile };
+/**
+ * Write the ReviewBench file and print the compact stdout result line.
+ * @param {{
+ *   findingsOut: string,
+ *   toPost: BenchPostFinding[],
+ *   meta: { id: string|number, sourceSha: string, targetSha: string },
+ *   env: NodeJS.ProcessEnv,
+ *   repoSlug?: string|null,
+ *   providerName: string,
+ *   costUsd: number,
+ *   durationMs: number,
+ *   strict: { triggered?: boolean },
+ *   stdout?: { write: (s: string) => unknown },
+ * }} opts
+ * @returns {number} process exit code (8 when strict triggers, else 0)
+ */
+function emitFindingsOutRun(opts) {
+  const written = writeReviewBenchFindingsFile(opts);
+  const out = opts.stdout ?? process.stdout;
+  out.write(JSON.stringify({
+    findingsOut: opts.findingsOut,
+    provider: opts.providerName,
+    prId: opts.meta.id,
+    findingCount: written.findingCount,
+    costUsd: opts.costUsd,
+    durationMs: opts.durationMs,
+    strict: opts.strict,
+  }) + '\n');
+  return opts.strict?.triggered ? 8 : 0;
+}
+
+module.exports = {
+  toReviewBenchFindings, resolveFindingsOut, writeReviewBenchFindingsFile, emitFindingsOutRun,
+};

@@ -14,6 +14,7 @@ const { safeMsg } = require('./lib/log-safe.js');
 const { logEvent } = require('./lib/log-helpers.js');
 const summaryPort = require('./lib/port/summary-port.js');
 const sizeAdvisoryPort = require('./lib/port/size-advisory-port.js');
+const { emitDryRunResult } = require('./lib/review-dry-run-emit.js');
 const replyEvaluator = require('./lib/port/reply-evaluator.js');
 const replyContextPort = require('./lib/port/reply-context-port.js');
 const {
@@ -30,7 +31,7 @@ const { runLifecycle } = require('./lib/run-lifecycle.js');
 const { guard: tlGuard, report: tlGateReport } = require('./lib/port/tl-gate-run.js');
 const { guard: skipGuard, reviewedMarker } = require('./lib/port/skip-unchanged.js');
 const { parseArgs } = require('./lib/args.js');
-const { resolveFindingsOut, writeReviewBenchFindingsFile } = require('./lib/findings-bench.js');
+const { resolveFindingsOut, emitFindingsOutRun } = require('./lib/findings-bench.js');
 const { localProviderOpts } = require('./lib/providers/local.js');
 const { runLearn, runLearnWith, learnPrBody } = require('./lib/learn/runner.js');
 
@@ -124,51 +125,18 @@ async function runReview(opts = {}) {
     });
 
     if (findingsOut) {
-      const written = writeReviewBenchFindingsFile({
-        findingsOut,
-        toPost,
-        meta,
-        env,
-        repoSlug: provider.repoSlug,
+      return emitFindingsOutRun({
+        findingsOut, toPost, meta, env, repoSlug: provider.repoSlug,
+        providerName, costUsd: totalUsd, durationMs: life.elapsedMs(), strict,
       });
-      process.stdout.write(JSON.stringify({
-        findingsOut,
-        provider: providerName,
-        prId: meta.id,
-        findingCount: written.findingCount,
-        costUsd: totalUsd,
-        durationMs: life.elapsedMs(),
-        strict,
-      }) + '\n');
-      return strict.triggered ? 8 : 0;
     }
 
     if (cliFlags.dryRun) {
-      const project = (a) => a.map((f) => ({
-        filePath: f.filePath ?? f.finding?.filePath,
-        line: f.line ?? f.finding?.line,
-        severity: f.severity ?? f.finding?.severity,
-        category: f.category ?? f.finding?.category,
-        ruleId: f.ruleId ?? f.finding?.ruleId,
-      }));
-      const sizeDry = await sizeAdvisoryPort.sync(provider, diffs, {
-        review: config.review, excludePaths: config.paths?.exclude, dryRun: true,
+      return emitDryRunResult({
+        provider, providerName, meta, diffs, plan: { toPost, toReply, toReopen, toClose },
+        review: config.review, excludePaths: config.paths?.exclude, stats,
+        costUsd: totalUsd, durationMs: life.elapsedMs(), strict,
       });
-      process.stdout.write(JSON.stringify({
-        dryRun: true,
-        provider: providerName,
-        prId: meta.id,
-        wouldPost: project(toPost),
-        wouldReply: project(toReply),
-        wouldReopen: project(toReopen),
-        wouldClose: project(toClose),
-        summaryAction: 'would-create',
-        ...sizeAdvisoryPort.toResultFields(sizeDry),
-        costUsd: totalUsd, durationMs: life.elapsedMs(),
-        dismissedContext: { count: stats.dismissedCount },
-        strict,
-      }) + '\n');
-      return strict.triggered ? 8 : 0;
     }
 
     // Post/reply/reopen/close all live behind one call so a posting bug has
