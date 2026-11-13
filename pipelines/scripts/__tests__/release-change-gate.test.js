@@ -9,6 +9,7 @@ const { execFileSync } = require('node:child_process');
 const {
   evaluateReleaseChanges,
   previousVersionTag,
+  nextVersion,
   jsonChangedBeyondOwletVersion,
 } = require('../lib/release-change-gate.js');
 
@@ -112,4 +113,12 @@ test('previousVersionTag returns latest semver tag', () => {
   assert.equal(previousVersionTag({ cwd: dir }), 'v1.1.0');
   assert.equal(previousVersionTag({ cwd: dir, exclude: 'v1.1.0' }), 'v1.0.5');
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('nextVersion bumps patch minor major from base', () => {
+  assert.equal(nextVersion('1.7.0', 'patch'), '1.7.1');
+  assert.equal(nextVersion('v1.7.0', 'minor'), '1.8.0');
+  assert.equal(nextVersion('1.7.9', 'major'), '2.0.0');
+  assert.throws(() => nextVersion('1.7', 'patch'));
+  assert.throws(() => nextVersion('1.7.0', 'beta'));
 });

@@ -86,6 +86,6 @@ _Avoid_: "CI gate", "TL gate", "strict gate" (those are review-time controls).
 
 ## Manual release
 
-Starting the Release workflow from the Actions tab (`workflow_dispatch`) with a `patch` / `minor` / `major` bump so `main` is versioned and tagged without a local `git tag`. Publishing still happens only on the resulting tag push ([ADR-0022](./docs/adr/0022-manual-release-change-gate.md)).
+Starting the Release workflow from the Actions tab (`workflow_dispatch`) with a `patch` / `minor` / `major` bump so `main` HEAD is tagged without a local `git tag` or a direct push to protected `main`. Publishing still happens only on the resulting tag push; a version-sync PR may follow ([ADR-0022](./docs/adr/0022-manual-release-change-gate.md)).
 
 _Avoid_: "auto release on merge" (merging to `main` does not publish).

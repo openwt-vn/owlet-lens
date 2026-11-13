@@ -145,9 +145,39 @@ function previousVersionTag(opts = {}) {
   return filtered.length ? filtered[filtered.length - 1] : null;
 }
 
+/**
+ * Next semver from a base version and bump kind. Base may be "1.2.3" or "v1.2.3".
+ * @param {string} baseVersion
+ * @param {'patch'|'minor'|'major'|string} bump
+ * @returns {string}
+ */
+function nextVersion(baseVersion, bump) {
+  const raw = String(baseVersion || '').trim().replace(/^v/, '');
+  const parts = raw.split('.').map((p) => Number(p));
+  if (parts.length !== 3 || parts.some((n) => !Number.isInteger(n) || n < 0)) {
+    throw new Error(`invalid semver base: ${baseVersion}`);
+  }
+  let [maj, min, pat] = parts;
+  const kind = String(bump || '').trim();
+  if (kind === 'major') {
+    maj += 1;
+    min = 0;
+    pat = 0;
+  } else if (kind === 'minor') {
+    min += 1;
+    pat = 0;
+  } else if (kind === 'patch') {
+    pat += 1;
+  } else {
+    throw new Error(`invalid bump: ${bump}`);
+  }
+  return `${maj}.${min}.${pat}`;
+}
+
 module.exports = {
   evaluateReleaseChanges,
   previousVersionTag,
+  nextVersion,
   stripOwletVersionFields,
   jsonChangedBeyondOwletVersion,
 };

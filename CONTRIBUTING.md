@@ -59,12 +59,14 @@ Layering: `ai-review.js` orchestrates, `port/` wraps, `providers/` talks to plat
 
 ## 6. Releasing
 
-Version bumps are deliberate, never automatic.
+Version bumps are deliberate, never automatic on merge. Preferred path: GitHub Actions → **Release** → Run workflow → `patch` / `minor` / `major`. That tags `main` HEAD (no direct push to protected `main`), publishes on the tag, then opens a version-sync PR ([ADR-0022](./docs/adr/0022-manual-release-change-gate.md)).
+
+Local tag-only path (still subject to the release change gate):
 
 ```bash
-npm version <minor|major> --no-git-tag-version   # updates package.json + lock
-git commit -am "chore: bump version to X.Y.Z"
-git tag vX.Y.Z && git push origin main vX.Y.Z
+git fetch --tags
+git tag vX.Y.Z          # next version from the previous tag; tip should be main
+git push origin vX.Y.Z
 ```
 
 The Release workflow builds `dist/`, commits it to the tag, force-moves the major tag (`v1`) and publishes `@openwt-vn/owlet-lens` to npm. Consumers use `openwt-vn/owlet-lens@v1`. When the major changes, update the `@vN` references in `README.md` and `.github/workflows/ai-review-reusable.yml`.

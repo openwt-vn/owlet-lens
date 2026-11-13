@@ -44,28 +44,38 @@ jobs:
             console.log(r.ok ? "gate ok:" : "gate blocked:", r.reason);
             process.exit(r.ok ? 0 : 1);
           '
-      - name: Bump version, commit, and push tag
+      # main is protected (PR + status checks). Do not push a bump commit there.
+      # Tag main HEAD with the next version; the tag job writes package.json on the tag and
+      # opens a PR to sync main (ADR-0022).
+      - name: Tag main HEAD and push version tag
         env:
           BUMP: ${{ inputs.bump }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          npm version "$BUMP" --no-git-tag-version
-          VERSION=$(node -p "require('./package.json').version")
-          git add package.json package-lock.json
-          git commit -m "chore: bump version to $VERSION"
-          git tag "v$VERSION"
-          git push origin HEAD:main
-          git push origin "v$VERSION"
+          PREV=$(node -e 'const g=require("./pipelines/scripts/lib/release-change-gate.js"); process.stdout.write(g.previousVersionTag()||"")')
+          if [ -n "$PREV" ]; then
+            BASE="${PREV#v}"
+          else
+            BASE=$(node -p "require('./package.json').version")
+          fi
+          VERSION=$(node -e 'const g=require("./pipelines/scripts/lib/release-change-gate.js"); process.stdout.write(g.nextVersion(process.argv[1], process.argv[2]))' "$BASE" "$BUMP")
+          TAG="v$VERSION"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already exists"
+            exit 1
+          fi
+          echo "Tagging $(git rev-parse --short HEAD) as $TAG (base $BASE, bump $BUMP)"
+          git tag "$TAG"
+          git push origin "$TAG"
 
   release:
     if: github.event_name == 'push'
-    # Takes the runner from CI_RUNNER like the other workflows. This job pushes tags and main with
-    # write access, so it must run on GitHub-hosted runners (the default) as soon as the repository is
+    # Takes the runner from CI_RUNNER like the other workflows. This job pushes tags and may open a
+    # version-sync PR; it must run on GitHub-hosted runners (the default) as soon as the repository is
     # public: unset CI_RUNNER then. While the repository is private, only people we trust can run it.
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: write
+      pull-requests: write
       id-token: write   # npm trusted publishing (OIDC): no npm token is stored in this repository
     steps:
       - uses: actions/checkout@v7
@@ -154,12 +164,16 @@ jobs:
           else
             npm publish
           fi
-      - name: Sync package.json version on main
+      # main requires PRs + status checks (GH013). Open a sync PR instead of pushing directly.
+      - name: Open PR to sync package.json version on main
         env:
+          GH_TOKEN: ${{ github.token }}
           REF_NAME: ${{ github.ref_name }}
         run: |
           VERSION="${REF_NAME#v}"
-          git checkout -B main origin/main
+          BRANCH="chore/bump-version-$VERSION"
+          git fetch origin main
+          git checkout -B "$BRANCH" origin/main
           CURRENT=$(node -p "require('./package.json').version")
           # Only move forward: an older patch tag (e.g. v2.5.3 after v2.6.0) must not downgrade main.
           if ! node -e '
@@ -170,7 +184,16 @@ jobs:
             echo "main already at $CURRENT (>= $VERSION), skipping"
             exit 0
           fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           npm version "$VERSION" --no-git-tag-version
           git add package.json package-lock.json
-          git commit -m "chore: bump version to $VERSION [skip ci]"
-          git push origin main
+          git commit -m "chore: bump version to $VERSION"
+          git push -u origin "$BRANCH"
+          if gh pr view "$BRANCH" --json number >/dev/null 2>&1; then
+            echo "PR for $BRANCH already exists"
+            exit 0
+          fi
+          gh pr create --base main --head "$BRANCH" \
+            --title "chore: bump version to $VERSION" \
+            --body "Sync \`package.json\` after release \`$REF_NAME\`. Opened by the Release workflow because \`main\` is protected."
