@@ -2,12 +2,12 @@
 
 Details moved out of the README: provider setup, CLI, strict mode, exit codes, state model, Action inputs/outputs, and token permissions. For a 5-minute setup see the [README](../README.md).
 
-## Review provider (GitHub, Bitbucket, GitLab, or Azure DevOps)
+## Review provider (GitHub, Bitbucket, GitLab, Azure DevOps, or local)
 
-The review provider (where PRs and comments live) is separate from the LLM provider. Four are supported:
+The review provider (where PRs and comments live) is separate from the LLM provider. Five are supported:
 
 ```yaml
-provider: bitbucket   # github (default) | bitbucket | gitlab | azure-devops | auto
+provider: bitbucket   # github (default) | bitbucket | gitlab | azure-devops | local | auto
 ```
 
 - **GitHub** (default): set `auth.token: ${GITHUB_TOKEN}`. Required env: `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_PR_NUMBER`. Auto-detected on GitHub Actions (`GITHUB_ACTIONS=true`).
@@ -23,8 +23,32 @@ provider: bitbucket   # github (default) | bitbucket | gitlab | azure-devops | a
 - **Azure DevOps**: set `auth.azureToken: ${AZURE_DEVOPS_TOKEN}` (a PAT, sent as Basic with an empty username) or use the pipeline `SYSTEM_ACCESSTOKEN` (Bearer). Required env: `AZURE_DEVOPS_ORG_URL` (or `SYSTEM_COLLECTIONURI` on Pipelines), `SYSTEM_TEAMPROJECT`, `BUILD_REPOSITORY_ID` (or `BUILD_REPOSITORY_NAME`), `SYSTEM_PULLREQUEST_PULLREQUESTID`.
 
   Auto-detected on Azure Pipelines (`TF_BUILD=True`). Outside Pipelines — locally or on another CI — set `AZURE_DEVOPS_ORG_URL` explicitly, since `SYSTEM_COLLECTIONURI` is absent. The `azure.*` config keys (`orgUrl`, `project`, `repoId`, `prId`, `tokenType`) take precedence over the env vars; see the [configuration reference](./config.md#azure-devops).
+- **Local** (benchmark / offline): `--provider=local` reads a three-dot git diff from a checkout — **no forge token**. Requires `--base` / `--head` (or `RB_BASE` / `RB_HEAD`) and optionally `--repo-dir` (or `RB_REPO`). Never selected by CI auto-detect. Still needs the active LLM API key.
 
-Select explicitly with `--provider=github|bitbucket|gitlab|azure-devops` or `provider:` in config; leave `provider: auto` (or omit) to detect from the CI environment.
+Select explicitly with `--provider=github|bitbucket|gitlab|azure-devops|local` or `provider:` in config; leave `provider: auto` (or omit) to detect from the CI environment.
+
+## Local review + ReviewBench findings export
+
+For offline benchmarking (e.g. [ReviewBench](https://github.com/review-bench/ReviewBench)), run a full **review pass** without posting comments and write a findings file the harness can judge:
+
+```bash
+owlet-lens review \
+  --provider=local \
+  --repo-dir=/work/repo \
+  --base="$RB_BASE" \
+  --head="$RB_HEAD" \
+  --findings-out="$RB_OUT" \
+  --force-review \
+  --config=ai-review.config.yaml
+```
+
+| Flag / env | Role |
+|---|---|
+| `--findings-out` / `RB_OUT` | Write ReviewBench-shaped JSON (`file`, `start_line`, `end_line`, `message`, …). Suppresses forge writes for that run. |
+| `RB_NWO`, `RB_PR_NUMBER` | PR identity in the findings envelope |
+| `RB_AGENT` | `agent` / `producer` (default `owlet-lens`) |
+
+`--dry-run` is unchanged: it still previews post intent as today and does **not** gain ReviewBench fields. The supported bench path is **local + `--findings-out` + LLM key**.
 
 ## Noise reduction
 
@@ -44,9 +68,11 @@ review:
 ## CLI
 
 ```
-node pipelines/scripts/ai-review.js review [--config=path] [--provider=github]
+node pipelines/scripts/ai-review.js review [--config=path] [--provider=github|bitbucket|gitlab|azure-devops|local]
 node pipelines/scripts/ai-review.js reply  [--config=path] [--provider=github]
 ```
+
+Useful review flags: `--dry-run`, `--strict`, `--force-review`, `--base`, `--head`, `--repo-dir`, `--findings-out` (see [Local review + ReviewBench findings export](#local-review--reviewbench-findings-export)).
 
 ### `owlet-lens init`
 

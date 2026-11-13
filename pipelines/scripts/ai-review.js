@@ -30,6 +30,8 @@ const { runLifecycle } = require('./lib/run-lifecycle.js');
 const { guard: tlGuard, report: tlGateReport } = require('./lib/port/tl-gate-run.js');
 const { guard: skipGuard, reviewedMarker } = require('./lib/port/skip-unchanged.js');
 const { parseArgs } = require('./lib/args.js');
+const { resolveFindingsOut, writeReviewBenchFindingsFile } = require('./lib/findings-bench.js');
+const { localProviderOpts } = require('./lib/providers/local.js');
 const { runLearn, runLearnWith, learnPrBody } = require('./lib/learn/runner.js');
 
 async function runReview(opts = {}) {
@@ -43,12 +45,23 @@ async function runReview(opts = {}) {
     const providerName = detectProvider({
       env, cliFlag: cliFlags.provider, configValue: config.provider,
     });
-    const provider = providerIndex.makeProvider(providerName, { config, env });
+    const provider = providerIndex.makeProvider(providerName, {
+      config,
+      env,
+      ...(providerName === 'local' ? { local: localProviderOpts(cliFlags, env) } : {}),
+    });
+    const findingsOut = resolveFindingsOut(cliFlags, env);
+    const suppressWrites = Boolean(cliFlags.dryRun) || Boolean(findingsOut);
 
     // The TL gate answers "may this run spend a token?" before any LLM client
     // is built, reading its switch off the PR's TARGET branch (ADR-0014).
+    // Findings export suppresses forge writes the same way dry-run does.
+    const writeFlags = suppressWrites ? { ...cliFlags, dryRun: true } : cliFlags;
     const meta = await provider.getPRMetadata();
-    const { gate, held, noteFailed } = await tlGuard({ provider, providerName, cwd, cliFlags, meta, life, auditLogPath: config.review.auditLogPath });
+    const { gate, held, noteFailed } = await tlGuard({
+      provider, providerName, cwd, cliFlags: writeFlags, meta, life,
+      auditLogPath: config.review.auditLogPath,
+    });
     if (held) return 0;
 
     // The review fingerprint decides "has anything the review depends on
@@ -60,7 +73,7 @@ async function runReview(opts = {}) {
       config,
       standards: [promptContext.codingStandards, promptContext.suppressionContext, promptContext.projectContext],
     });
-    const tlGate = tlGateReport(gate, { dryRun: cliFlags.dryRun, noteFailed });
+    const tlGate = tlGateReport(gate, { dryRun: suppressWrites, noteFailed });
     const skipCode = await skipGuard({ provider, providerName, config, cliFlags, env, meta, fingerprint, tlGate, life });
     if (skipCode !== null) return skipCode;
 
@@ -103,12 +116,32 @@ async function runReview(opts = {}) {
 
     const nextStateReview = life.appendState({
       prNumber: Number(meta.id),
-      enabled: !cliFlags.dryRun,
+      enabled: !suppressWrites,
       invocation: {
         type: 'review', ts: new Date().toISOString(),
         costUsd: totalUsd, model: usage.models.join(',') || config.review.model,
       },
     });
+
+    if (findingsOut) {
+      const written = writeReviewBenchFindingsFile({
+        findingsOut,
+        toPost,
+        meta,
+        env,
+        repoSlug: provider.repoSlug,
+      });
+      process.stdout.write(JSON.stringify({
+        findingsOut,
+        provider: providerName,
+        prId: meta.id,
+        findingCount: written.findingCount,
+        costUsd: totalUsd,
+        durationMs: life.elapsedMs(),
+        strict,
+      }) + '\n');
+      return strict.triggered ? 8 : 0;
+    }
 
     if (cliFlags.dryRun) {
       const project = (a) => a.map((f) => ({

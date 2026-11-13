@@ -271,7 +271,9 @@ Edge cases: `enabled: true` with an empty `leads` list is a `ConfigError` (exit 
 
 Per-platform button setup: [GitHub](./tl-gate-github-setup.md) · [GitLab](./tl-gate-gitlab-setup.md) · [Bitbucket](./tl-gate-bitbucket-setup.md) · [Azure DevOps](./tl-gate-azure-devops-setup.md). `leads` holds each platform's durable id — a GitHub numeric user id (`GET /user/{account_id}`), a GitLab numeric user id, a Bitbucket account UUID (with its braces), or the Azure DevOps identity GUID.
 
-## Review providers (Bitbucket, GitLab and Azure DevOps)
+## Review providers (Bitbucket, GitLab, Azure DevOps, and local)
+
+Top-level `provider:` selects the forge (or `local`). Values: `github` | `bitbucket` | `gitlab` | `azure-devops` | `local` | `auto`. With `local`, no forge token is required; use CLI `--base` / `--head` / `--repo-dir` / `--findings-out` (and ReviewBench `RB_*` fallbacks) as described in [Usage — Local review](./usage.md#local-review--reviewbench-findings-export). LLM auth is unchanged.
 
 ### Bitbucket
 
