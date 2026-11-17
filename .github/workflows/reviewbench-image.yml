@@ -7,6 +7,10 @@ name: ReviewBench image
 # tags are never overwritten. Register the digest from the run summary.
 on:
   workflow_dispatch:
+  # TEMPORARY: lets this branch run the workflow before it exists on main. Remove before merge.
+  push:
+    branches: [ci/reviewbench-image]
+    paths: ['.github/workflows/reviewbench-image.yml']
 
 # Two runs at once could pick the same build number.
 concurrency:
