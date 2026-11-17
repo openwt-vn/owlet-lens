@@ -237,3 +237,22 @@ test('openai-base: _mapStreamError hook receives the error and the model id', as
   const p = new HookProvider({ apiKey: 'k', defaultModel: 'm', pricingOverride: {}, maxAttempts: 1 });
   await assert.rejects(p.call('sys', 'usr', { model: 'x/y' }), /hooked 404 x\/y/);
 });
+
+test('openai on api.openai.com caps output with max_completion_tokens, not max_tokens', () => {
+  const mk = (providerName, apiUrl) => new OpenAICompatibleProvider({
+    apiKey: 'k', defaultModel: 'm', providerName, errorLabel: 'T', apiUrl, maxOutputTokens: 64_000,
+  });
+  const args = { model: 'gpt-5.5', systemPrompt: 's', userPrompt: 'u', maxTokens: 1000 };
+
+  const official = mk('openai', 'https://api.openai.com/v1/chat/completions')._request(args).body;
+  assert.equal(official.max_completion_tokens, 1000);
+  assert.equal('max_tokens' in official, false);
+
+  const custom = mk('openai', 'http://localhost:11434/v1/chat/completions')._request(args).body;
+  assert.equal(custom.max_tokens, 1000);
+  assert.equal('max_completion_tokens' in custom, false);
+
+  const other = mk('modelstack', 'https://api.modelstack.cc/v1/chat/completions')._request(args).body;
+  assert.equal(other.max_tokens, 1000);
+  assert.equal('max_completion_tokens' in other, false);
+});

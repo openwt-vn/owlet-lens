@@ -75,7 +75,7 @@ class OpenAICompatibleProvider extends BaseLLMProvider {
         // Clamp so a large shared reviewMaxTokens can't exceed the model's cap.
         // These are reasoning models whose max_tokens budget covers BOTH
         // reasoning and answer tokens; too small a cap returns empty content.
-        max_tokens: Math.min(maxTokens, this.maxOutputTokens),
+        [this._maxTokensField()]: Math.min(maxTokens, this.maxOutputTokens),
         stream: true,
         stream_options: { include_usage: true },
         messages: [
@@ -85,6 +85,20 @@ class OpenAICompatibleProvider extends BaseLLMProvider {
         ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
       },
     };
+  }
+
+  /**
+   * Request field that caps output tokens. api.openai.com rejects `max_tokens`
+   * for current models ("Use 'max_completion_tokens' instead"). Every other
+   * OpenAI-compatible endpoint (including a custom apiBaseUrl for Ollama, LM
+   * Studio or a gateway) keeps the widely supported `max_tokens`.
+   *
+   * @returns {'max_tokens' | 'max_completion_tokens'}
+   */
+  _maxTokensField() {
+    return this.providerName === 'openai' && /^https:\/\/api\.openai\.com\//.test(this.apiUrl)
+      ? 'max_completion_tokens'
+      : 'max_tokens';
   }
 
   /**
