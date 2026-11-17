@@ -1,0 +1,13 @@
+# Minimal Owlet config for ReviewBench local runs (no forge token).
+provider: local
+auth:
+  anthropicKey: ${ANTHROPIC_API_KEY}
+review:
+  provider: anthropic
+  # Override with RB_CONFIG_MODEL if you wire that into the adapter later.
+  model: claude-sonnet-4-6
+  reflection: false
+  skipUnchanged: false
+reply:
+  provider: anthropic
+  model: claude-haiku-4-5-20251001
