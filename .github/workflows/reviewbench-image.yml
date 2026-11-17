@@ -2,10 +2,16 @@ name: ReviewBench image
 
 # Manual build of the ReviewBench agent image (benchmarks/reviewbench) and push
 # to GitHub Container Registry. The Owlet Lens version is read from package.json
-# on the ref the workflow runs on. If that version's image tag already exists it
-# is overwritten. Register the digest from the run summary.
+# on the ref the workflow runs on, and the image tag is <version>-<build>, where
+# <build> counts up from 0 for that version (1.8.0-0, 1.8.0-1, ...). Existing
+# tags are never overwritten. Register the digest from the run summary.
 on:
   workflow_dispatch:
+
+# Two runs at once could pick the same build number.
+concurrency:
+  group: reviewbench-image
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -44,17 +50,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-      - name: Check for an existing image
-        id: existing
+      - name: Pick the next build number
+        id: tag
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          if docker buildx imagetools inspect "${IMAGE}:${VERSION}" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::${IMAGE}:${VERSION} already exists and will be overwritten"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
+          BUILD=0
+          while true; do
+            if OUT=$(docker buildx imagetools inspect "${IMAGE}:${VERSION}-${BUILD}" 2>&1); then
+              BUILD=$((BUILD + 1))
+            elif grep -qiE 'not found|manifest unknown|name unknown' <<<"$OUT"; then
+              break
+            else
+              # Auth or network trouble must not look like "tag is free".
+              echo "could not check ${IMAGE}:${VERSION}-${BUILD}: $OUT" >&2
+              exit 1
+            fi
+          done
+          echo "tag=${VERSION}-${BUILD}" >> "$GITHUB_OUTPUT"
       - id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -63,23 +76,18 @@ jobs:
           push: true
           build-args: |
             OWLET_VERSION=${{ steps.version.outputs.version }}
-          tags: ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
+          tags: ${{ env.IMAGE }}:${{ steps.tag.outputs.tag }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.version=${{ steps.tag.outputs.tag }}
       - name: Show digest
         env:
           DIGEST: ${{ steps.build.outputs.digest }}
-          VERSION: ${{ steps.version.outputs.version }}
-          EXISTED: ${{ steps.existing.outputs.exists }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           {
-            echo "### ReviewBench image (Owlet Lens ${VERSION})"
+            echo "### ReviewBench image ${TAG}"
             echo
-            if [ "$EXISTED" = "true" ]; then
-              echo "The tag ${VERSION} already existed and was overwritten."
-              echo
-            fi
             echo "Register this digest on review-bench.ai:"
             echo
             echo '```'

@@ -6,7 +6,7 @@ Env the adapter reads: `RB_NWO`, `RB_PR_NUMBER`, `RB_BASE`, `RB_HEAD`, `RB_OUT`,
 
 ## Build and publish (manual workflow)
 
-Run **Actions -> ReviewBench image -> Run workflow**. There is no input: the Owlet Lens version is read from `package.json` on the branch you run it on, and it must already be published on npm (release first). The workflow builds `linux/amd64`, pushes `ghcr.io/<owner>/owlet-lens-reviewer:<version>`, and prints the image digest in the run summary. If that version's tag already exists, it is overwritten. Register the digest, not the tag, on review-bench.ai.
+Run **Actions -> ReviewBench image -> Run workflow**. There is no input: the Owlet Lens version is read from `package.json` on the branch you run it on, and it must already be published on npm (release first). The workflow builds `linux/amd64` and pushes `ghcr.io/<owner>/owlet-lens-reviewer:<version>-<build>`, where `<build>` counts up from 0 for that version (`1.8.0-0`, `1.8.0-1`, ...). Existing tags are never overwritten. The image digest is printed in the run summary. Register the digest, not the tag, on review-bench.ai.
 
 A new GHCR package starts private. Make it public in the package settings so the portal can pull it anonymously.
 
