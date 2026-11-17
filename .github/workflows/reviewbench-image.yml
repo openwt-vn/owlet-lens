@@ -1,15 +1,11 @@
 name: ReviewBench image
 
 # Manual build of the ReviewBench agent image (benchmarks/reviewbench) and push
-# to GitHub Container Registry. Register the digest from the run summary.
+# to GitHub Container Registry. The Owlet Lens version is read from package.json
+# on the ref the workflow runs on. If that version's image tag already exists it
+# is overwritten. Register the digest from the run summary.
 on:
   workflow_dispatch:
-    inputs:
-      owlet_version:
-        description: Published @openwt-vn/owlet-lens version to install (x.y.z, or latest)
-        required: true
-        type: string
-        default: latest
 
 permissions:
   contents: read
@@ -20,23 +16,25 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/owlet-lens-reviewer
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
-      - name: Resolve Owlet Lens version
+      - name: Read version from package.json
         id: version
-        env:
-          REQUESTED: ${{ inputs.owlet_version }}
         run: |
-          if ! [[ "$REQUESTED" =~ ^(latest|[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-            echo "owlet_version must be 'latest' or x.y.z (got: $REQUESTED)" >&2
+          VERSION=$(node -p "require('./package.json').version")
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "package.json version is not x.y.z: $VERSION" >&2
             exit 1
           fi
-          VERSION=$(npm view "@openwt-vn/owlet-lens@${REQUESTED}" version)
-          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "could not resolve a published version for '$REQUESTED'" >&2
+          # The image installs the published npm package, so the version must exist there.
+          PUBLISHED=$(npm view "@openwt-vn/owlet-lens@${VERSION}" version 2>/dev/null || true)
+          if [ "$PUBLISHED" != "$VERSION" ]; then
+            echo "@openwt-vn/owlet-lens@${VERSION} is not published on npm yet; release it first" >&2
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -46,6 +44,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Check for an existing image
+        id: existing
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if docker buildx imagetools inspect "${IMAGE}:${VERSION}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::${IMAGE}:${VERSION} already exists and will be overwritten"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
       - id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -54,19 +63,23 @@ jobs:
           push: true
           build-args: |
             OWLET_VERSION=${{ steps.version.outputs.version }}
-          tags: ghcr.io/${{ github.repository_owner }}/owlet-lens-reviewer:${{ steps.version.outputs.version }}
+          tags: ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.version=${{ steps.version.outputs.version }}
       - name: Show digest
         env:
-          IMAGE: ghcr.io/${{ github.repository_owner }}/owlet-lens-reviewer
           DIGEST: ${{ steps.build.outputs.digest }}
           VERSION: ${{ steps.version.outputs.version }}
+          EXISTED: ${{ steps.existing.outputs.exists }}
         run: |
           {
             echo "### ReviewBench image (Owlet Lens ${VERSION})"
             echo
+            if [ "$EXISTED" = "true" ]; then
+              echo "The tag ${VERSION} already existed and was overwritten."
+              echo
+            fi
             echo "Register this digest on review-bench.ai:"
             echo
             echo '```'
