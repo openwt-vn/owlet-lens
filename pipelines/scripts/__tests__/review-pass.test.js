@@ -399,6 +399,19 @@ describe('runReviewPass: chunk parity with the main call', () => {
     assert.equal(plan.toPost[0].suggestion, 'fix()');
   });
 
+  it('carries a valid confidence onto the posted finding and keeps findings without one', async () => {
+    const { diffs, tokenBudget } = overflowSetup();
+    const llm = fakeLlm([
+      [finding('src/a.js', 1, { confidence: 'LOW' })],
+      [finding('src/b.js', 1, { confidence: 'SURE' })],
+    ]);
+    const { plan } = await pass({ diffs, llm, tokenBudget });
+    const byFile = Object.fromEntries(plan.toPost.map((f) => [f.filePath, f]));
+    assert.equal(byFile['src/a.js'].confidence, 'LOW');
+    assert.ok(byFile['src/b.js'], 'finding with an invalid confidence is still posted');
+    assert.equal('confidence' in byFile['src/b.js'], false);
+  });
+
   it('re-prompts a chunk once when its response does not parse', async () => {
     const { diffs, tokenBudget } = overflowSetup();
     const llm = fakeLlm([[], 'junk', [finding('src/b.js', 1)]]);

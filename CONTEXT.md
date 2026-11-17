@@ -72,6 +72,12 @@ An open (`active`) bot finding thread from an earlier run whose stored severity 
 
 _Avoid_: "stale finding" (the finding is current; only its thread is older than this run).
 
+## Confidence
+
+How likely a finding is to be correct, as graded by the review LLM in the same call that produces the finding: `HIGH`, `MEDIUM` or `LOW`. It is separate from **severity**, which says how serious the finding is if it is correct. Today it is only collected and shown, as a note next to severity in the comment (`**[HIGH/bug]** _(confidence: MEDIUM)_ ...`); it never drops, reorders or closes anything. A finding with no usable confidence is kept and shown without the note. A cutoff (`review.confidenceThreshold`, default `low`, `CRITICAL` never dropped) is planned for a later step.
+
+_Avoid_: "certainty", "score" (there are three labels, not a number), "CRITICAL confidence" (that level exists only for severity).
+
 ## PR-size advisory
 
 An optional, comment-only warning that a PR's file count or changed-line churn (added + removed) has crossed one or more of `review.maxFiles`, `review.maxChangedLines`, or `review.maxChangedLinesPerFile`. It does not bypass files, hold the review, or change the exit code by itself; the review still runs. Counts use the **advisory set**: after `paths.exclude` and boilerplate, and deliberately before `review.maxFileBytes` ([ADR-0018](./docs/adr/0018-pr-size-advisory.md)). The bot keeps one sticky PR comment under the `size-advisory` marker while any configured limit is exceeded, and deletes it when none are.

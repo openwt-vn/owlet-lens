@@ -3,6 +3,8 @@
 
 const VALID_SEVERITIES = new Set(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']);
 
+const VALID_CONFIDENCES = new Set(['HIGH', 'MEDIUM', 'LOW']);
+
 const SEVERITY_ORDER = new Map([
   ['CRITICAL', 0],
   ['HIGH', 1],
@@ -164,6 +166,7 @@ function buildChangedFilesMap(annotatedDiffs) {
 
 module.exports = {
   VALID_SEVERITIES,
+  VALID_CONFIDENCES,
   SEVERITY_ORDER,
   validateFindings,
   sortBySeverity,

@@ -2,6 +2,20 @@
 'use strict';
 
 const { CONFIG } = require('./config.js');
+const { VALID_CONFIDENCES } = require('./finding-validator.js');
+
+const CONFIDENCE_NOTE_RE = / _\(confidence: (?:HIGH|MEDIUM|LOW)\)_/;
+
+/**
+ * Removes the confidence note from a posted comment body so text matching
+ * (fuzzy dedup) sees the same text as before the note existed.
+ *
+ * @param {string} body
+ * @returns {string}
+ */
+function stripConfidenceNote(body) {
+  return typeof body === 'string' ? body.replace(CONFIDENCE_NOTE_RE, '') : body;
+}
 
 /**
  * Build the Markdown body for a review finding comment.
@@ -13,7 +27,8 @@ const { CONFIG } = require('./config.js');
  * @returns {string}
  */
 function formatBody(f, providerName) {
-  let body = `${CONFIG.aiReviewPrefix} **[${f.severity ?? 'UNKNOWN'}/${f.category ?? 'unknown'}]** ${f.body}`;
+  const confidence = VALID_CONFIDENCES.has(f.confidence) ? ` _(confidence: ${f.confidence})_` : '';
+  let body = `${CONFIG.aiReviewPrefix} **[${f.severity ?? 'UNKNOWN'}/${f.category ?? 'unknown'}]**${confidence} ${f.body}`;
   // Keep the leading indentation: a suggestion block replaces the whole line, so
   // stripping it would make "Apply suggestion" de-indent the code. Only blank
   // lines at the start and any trailing whitespace are removed.
@@ -29,4 +44,4 @@ function formatBody(f, providerName) {
   return body;
 }
 
-module.exports = { formatBody };
+module.exports = { formatBody, stripConfidenceNote };

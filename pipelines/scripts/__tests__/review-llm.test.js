@@ -205,3 +205,12 @@ describe('callForFindings — single model (no fallback configured)', () => {
     assert.equal(log.length, 1);
   });
 });
+
+describe('submit_findings schema', () => {
+  it('requires a confidence enum', () => {
+    const { SUBMIT_FINDINGS_TOOL } = require('../lib/review-llm.js');
+    const item = SUBMIT_FINDINGS_TOOL.input_schema.properties.findings.items;
+    assert.deepEqual(item.properties.confidence.enum, ['HIGH', 'MEDIUM', 'LOW']);
+    assert.ok(item.required.includes('confidence'));
+  });
+});

@@ -3,6 +3,7 @@
 
 const { fingerprint: portFingerprint } = require('./fingerprint.js');
 const { textSimilarity } = require('./fuzzy-match.js');
+const { stripConfidenceNote } = require('./format-body.js');
 
 // How far a finding's line can drift from an existing thread's line (from
 // unrelated edits shifting code around it) before it's not considered a
@@ -125,7 +126,7 @@ function reconcilePort(existing, newFindings, opts) {
     for (const t of candidates) {
       if (claimedThreadIds.has(t.id)) continue;
       if (Math.abs(t.line - f.line) > FUZZY_LINE_TOLERANCE) continue;
-      const score = textSimilarity(t.comments[0].body, f.body);
+      const score = textSimilarity(stripConfidenceNote(t.comments[0].body), f.body);
       if (score > bestScore) { bestScore = score; best = t; }
     }
     if (best && bestScore >= FUZZY_SIMILARITY_THRESHOLD) {

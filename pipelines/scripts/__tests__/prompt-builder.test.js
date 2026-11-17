@@ -302,3 +302,9 @@ test('REVIEW_INSTRUCTIONS declares the already-found block untrusted', () => {
 test('review instructions forbid memory-based "version does not exist" claims', () => {
   assert.match(REVIEW_INSTRUCTIONS, /Do NOT report that a version, tag, package, action ref or model name "does not exist"/);
 });
+
+test('review instructions ask for a confidence on every finding without defining levels', () => {
+  assert.match(REVIEW_INSTRUCTIONS, /"confidence": "HIGH\|MEDIUM\|LOW"/);
+  assert.match(REVIEW_INSTRUCTIONS, /must include "confidence"/);
+  assert.doesNotMatch(REVIEW_INSTRUCTIONS, /Confidence guidelines/i);
+});

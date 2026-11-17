@@ -76,3 +76,22 @@ test('includes AI Review prefix from CONFIG', () => {
   const result = formatBody({ ...base }, 'github');
   assert.ok(result.startsWith('[Owlet Lens] '));
 });
+
+test('shows confidence next to severity when valid', () => {
+  const result = formatBody({ ...base, confidence: 'MEDIUM' }, 'github');
+  assert.match(result, /\*\*\[HIGH\/bug\]\*\* _\(confidence: MEDIUM\)_ Missing null check\./);
+});
+
+test('omits confidence label when missing or invalid', () => {
+  for (const confidence of [undefined, null, 'SURE', 'high']) {
+    const result = formatBody({ ...base, confidence }, 'github');
+    assert.ok(!result.includes('confidence'), String(confidence));
+    assert.match(result, /\*\*\[HIGH\/bug\]\*\* Missing null check\./);
+  }
+});
+
+test('stripConfidenceNote restores the pre-confidence text', () => {
+  const { stripConfidenceNote } = require('../lib/format-body.js');
+  const withNote = formatBody({ ...base, confidence: 'LOW' }, 'github');
+  assert.equal(stripConfidenceNote(withNote), formatBody(base, 'github'));
+});

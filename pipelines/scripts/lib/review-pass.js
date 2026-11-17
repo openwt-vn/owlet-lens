@@ -14,7 +14,7 @@ const { redactDiffs } = require('./diff-secret-redact.js');
 const { annotateDiff } = require('./diff-annotate.js');
 const { partitionReviewable } = require('./reviewable-files.js');
 const { shouldDropAsNoise, truncateFindings } = require('./noise-filter.js');
-const { validateFindings, buildChangedFilesMap } = require('./finding-validator.js');
+const { validateFindings, buildChangedFilesMap, VALID_CONFIDENCES } = require('./finding-validator.js');
 const { rankSeverity } = require('./config.js');
 const { reflectionFilter } = require('./reflection-filter.js');
 const { reconcilePort } = require('./reconcile.js');
@@ -287,6 +287,7 @@ async function runCallPlan(reviewable, promptOpts, tracedImports, ctx, diffs) {
 function toRawFinding(f) {
   return {
     file: f.file, line: f.line, message: f.message, severity: f.severity, category: f.category,
+    ...(VALID_CONFIDENCES.has(f.confidence) ? { confidence: f.confidence } : {}),
     ...(typeof f.suggestion === 'string' && f.suggestion.trim() ? { suggestion: f.suggestion.trim() } : {}),
   };
 }
@@ -353,6 +354,7 @@ function filterFindings(validated, review, log) {
     findings.push({
       filePath: f.file, line: f.line, body: f.message,
       severity: f.severity ?? 'UNKNOWN', category, suggestion: f.suggestion ?? null,
+      ...(VALID_CONFIDENCES.has(f.confidence) ? { confidence: f.confidence } : {}),
       // Identity key is category-only, not category:severity. The LLM
       // re-grades the same finding's severity inconsistently run to run
       // (e.g. LOW -> MEDIUM); baking severity into the fingerprint turned
@@ -360,6 +362,10 @@ function filterFindings(validated, review, log) {
       // reposting the same code observation as a fresh thread.
       ruleId: category,
     });
+  }
+  const missingConfidence = findings.filter((f) => !f.confidence).length;
+  if (missingConfidence > 0) {
+    log('warn', 'finding.confidence.missing', { count: missingConfidence, total: findings.length });
   }
   return { findings, dropped };
 }

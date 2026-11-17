@@ -23,10 +23,13 @@ For each issue found, return a JSON object with this exact schema:
       "line": 42,
       "severity": "CRITICAL|HIGH|MEDIUM|LOW",
       "category": "security|bug|performance|naming|architecture|style",
+      "confidence": "HIGH|MEDIUM|LOW",
       "message": "Clear description of the issue and how to fix it"
     }
   ]
 }
+
+Every finding must include "confidence": how likely the finding is correct (use LOW when unsure).
 
 Severity guidelines:
 - CRITICAL: Security vulnerabilities, data loss risks, broken functionality
