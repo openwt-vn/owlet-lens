@@ -1,6 +1,6 @@
 {
   "name": "@openwt-vn/owlet-lens",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "license": "Apache-2.0",
   "description": "Owlet Lens: AI code review for pull requests on GitHub, GitLab, Bitbucket Cloud and Azure DevOps",
   "bin": {
