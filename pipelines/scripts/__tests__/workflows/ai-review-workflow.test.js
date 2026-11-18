@@ -111,9 +111,11 @@ test('the review job still runs on a plain pull_request, so a re-run reaches it'
 
   // Still a plain pull_request. Only pull requests from forks are skipped: they get no secrets,
   // so there is nothing to review with.
+  const cond = workflow.jobs.review.if.replace(/\s+/g, ' ').trim();
   assert.equal(
-    workflow.jobs.review.if,
-    "github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository",
+    cond,
+    "github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository"
+      + " && !contains(github.event.pull_request.body, '[skip-ai-review]')",
   );
   assert.equal(actionStepWith(workflow.jobs.review).with.subcommand, 'review');
 });
@@ -237,4 +239,21 @@ test('SECURITY.md exists and sends reports to private vulnerability reporting, n
   const text = fs.readFileSync(path.join(workflowsDir, '..', '..', 'SECURITY.md'), 'utf8');
   assert.match(text, /private vulnerability reporting/i);
   assert.match(text, /do not open a public issue/i);
+});
+
+test('a pull request description with [skip-ai-review] skips the review job, in both workflows', () => {
+  const marker = "!contains(github.event.pull_request.body, '[skip-ai-review]')";
+  assert.ok(loadWorkflow('ai-review.yml').jobs.review.if.includes(marker));
+  assert.ok(loadWorkflow('ai-review-reusable.yml').jobs.review.if.includes(marker));
+});
+
+test('/review on demand ignores [skip-ai-review]', () => {
+  const cond = loadWorkflow('ai-review.yml').jobs['review-on-demand'].if;
+  assert.ok(!cond.includes('skip-ai-review'));
+});
+
+test('the Release workflow opens the version-bump pull request with [skip-ai-review] in its description', () => {
+  const text = fs.readFileSync(path.join(workflowsDir, 'release.yml'), 'utf8');
+  const create = text.slice(text.indexOf('gh pr create'));
+  assert.ok(create.includes('[skip-ai-review]'));
 });

@@ -19,8 +19,14 @@ on:
 
 jobs:
   review:
-    # A fork gets no secrets, so there is nothing to review with; skip it.
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    # A fork gets no secrets, so there is nothing to review with; skip it. A pull request whose
+    # description contains [skip-ai-review] (for example the version-bump pull request) is skipped too.
+    # The description is read when the job starts, so editing it does not start or stop a review;
+    # a /review comment still reviews on demand.
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && !contains(github.event.pull_request.body, '[skip-ai-review]')
     # The runner comes from the repository variable CI_RUNNER (`self-hosted` while the repository is
     # private). Without it the job runs on GitHub-hosted ubuntu-latest, which is what a public repository
     # should use. This is not a security boundary: a pull request from a fork brings its own workflow

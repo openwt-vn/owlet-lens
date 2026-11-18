@@ -136,7 +136,8 @@ on:
 
 jobs:
   review:
-    if: ${{ inputs.allowed-org != '' && github.event_name == 'pull_request' && github.repository_owner == inputs.allowed-org }}
+    # A pull request whose description contains [skip-ai-review] is not reviewed.
+    if: ${{ inputs.allowed-org != '' && github.event_name == 'pull_request' && github.repository_owner == inputs.allowed-org && !contains(github.event.pull_request.body, '[skip-ai-review]') }}
     runs-on: ${{ fromJSON(inputs.runner) }}
     permissions:
       contents: read

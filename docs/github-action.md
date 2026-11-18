@@ -63,6 +63,15 @@ Replies are read from comments **inside review threads** (`pull_request_review_c
 >
 > This repo's own [workflow](../.github/workflows/ai-review.yml) adds a check that the commenter is a member of the repo.
 
+> [!TIP]
+> To skip the review on a pull request, put `[skip-ai-review]` in its description. To make this work in your own workflow, change the review job's `if:` to:
+>
+> ```yaml
+> if: github.event_name == 'pull_request' && !contains(github.event.pull_request.body, '[skip-ai-review]')
+> ```
+>
+> The description is read when the job starts, so editing it later does not start or stop a review. A `/review` comment still reviews on demand. The reusable workflow below already does this.
+
 ## 3. Open a pull request
 
  Findings appear as review threads within a minute or two. Reply to a thread to discuss it.
