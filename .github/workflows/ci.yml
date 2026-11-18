@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  test-matrix:
     strategy:
       fail-fast: false
       matrix:
@@ -34,6 +34,17 @@ jobs:
         run: npm ci || { rm -rf node_modules; npm ci; }
       - run: npm test
       - run: npm run coverage:gate
+
+  # The ruleset `protect-main` requires a check named `test`. The matrix jobs are named
+  # `test (node X)`, so this job reports the single `test` result and fails if any Node version failed.
+  test:
+    needs: test-matrix
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every Node version to pass
+        run: |
+          [ "${{ needs.test-matrix.result }}" = "success" ] || { echo "test matrix: ${{ needs.test-matrix.result }}"; exit 1; }
 
   secret-scan:
     # The runner comes from the repository variable CI_RUNNER (`self-hosted` while the repository is
