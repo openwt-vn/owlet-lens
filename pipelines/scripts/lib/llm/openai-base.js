@@ -1,7 +1,8 @@
 // @ts-check
 'use strict';
 
-const { BaseLLMProvider, DEFAULT_MAX_TOKENS, getFetchTimeoutMs, getFetchDispatcher } = require('./base.js');
+const { BaseLLMProvider, DEFAULT_MAX_TOKENS, getFetchTimeoutMs } = require('./base.js');
+const { llmFetch } = require('./http.js');
 const { ProviderError, LLMError, RateLimitError } = require('../errors.js');
 const { redactSecrets } = require('../log-safe.js');
 const { withRetry } = require('../retry.js');
@@ -166,13 +167,12 @@ class OpenAICompatibleProvider extends BaseLLMProvider {
       // ceiling stays generous (default 10min, override AI_REVIEW_LLM_TIMEOUT_MS).
       const timeoutMs = getFetchTimeoutMs();
       const signal = AbortSignal.timeout(timeoutMs);
-      const res = await fetch(url, {
+      const res = await llmFetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify(body),
         signal,
-        dispatcher: getFetchDispatcher(timeoutMs),
-      });
+      }, timeoutMs);
       await this.mapHttpError(res, { model });
       if (!res.body) {
         throw new ProviderError(`${this.errorLabel}: streaming response has no body`, {

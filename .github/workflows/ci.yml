@@ -10,6 +10,11 @@ permissions:
 
 jobs:
   test:
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22', '24', '26']
+    name: test (node ${{ matrix.node }})
     # The runner comes from the repository variable CI_RUNNER (`self-hosted` while the repository is
     # private). Without it the job runs on GitHub-hosted ubuntu-latest, which is what a public repository
     # should use. This is not a security boundary: a pull request from a fork brings its own workflow
@@ -19,7 +24,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: ${{ matrix.node }}
       # The self-hosted runners of one machine share ~/.npm, and installs that run at the same time can
       # corrupt it ("npm error Exit handler never called"). Each job gets its own cache folder, and a
       # failed install is retried once from a clean node_modules.

@@ -5,29 +5,10 @@ const { withRetry, parseRetryAfter } = require('../retry.js');
 const { AuthError, RateLimitError, ProviderError, LLMError, ConfigError } = require('../errors.js');
 const { redactSecrets } = require('../log-safe.js');
 const { calculateCost } = require('./pricing.js');
-const { Agent } = require('undici');
+const { DEFAULT_FETCH_TIMEOUT_MS, getFetchTimeoutMs, getFetchDispatcher, llmFetch } = require('./http.js');
 
 const DEFAULT_MAX_TOKENS = 32000;
 const DEFAULT_MAX_ATTEMPTS = 3;
-const DEFAULT_FETCH_TIMEOUT_MS = 10 * 60 * 1000;
-const FETCH_DISPATCHERS = new Map();
-
-function getFetchTimeoutMs(env = process.env) {
-  const raw = env.AI_REVIEW_LLM_TIMEOUT_MS;
-  const parsed = Number(raw);
-  if (Number.isFinite(parsed) && parsed > 0) return Math.trunc(parsed);
-  return DEFAULT_FETCH_TIMEOUT_MS;
-}
-
-function getFetchDispatcher(timeoutMs) {
-  if (!FETCH_DISPATCHERS.has(timeoutMs)) {
-    FETCH_DISPATCHERS.set(timeoutMs, new Agent({
-      headersTimeout: timeoutMs,
-      bodyTimeout: timeoutMs,
-    }));
-  }
-  return FETCH_DISPATCHERS.get(timeoutMs);
-}
 
 /**
  * Detect a Cloudflare edge challenge masquerading as a provider 403.
@@ -226,13 +207,12 @@ class BaseLLMProvider {
     const data = await withRetry(async () => {
       const timeoutMs = getFetchTimeoutMs();
       const signal = AbortSignal.timeout(timeoutMs);
-      const res = await fetch(url, {
+      const res = await llmFetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify(body),
         signal,
-        dispatcher: getFetchDispatcher(timeoutMs),
-      });
+      }, timeoutMs);
       await this.mapHttpError(res);
       try {
         return await res.json();

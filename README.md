@@ -100,7 +100,7 @@ It asks for your platform, LLM provider and models, then writes `ai-review.confi
 
 ### Try it from your terminal
 
-Print what it would post on a pull request, and post nothing (Node 20.10+):
+Print what it would post on a pull request, and post nothing (Node 20.10+; LLM calls are checked on Node 20, 22, 24 and 26):
 
 ```bash
 GITHUB_TOKEN=... ANTHROPIC_API_KEY=... GITHUB_REPOSITORY=owner/repo GITHUB_PR_NUMBER=42 \
