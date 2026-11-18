@@ -40,7 +40,7 @@ jobs:
   test:
     needs: test-matrix
     if: ${{ always() }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
       - name: Require every Node version to pass
         run: |
